@@ -1,0 +1,277 @@
+-- ============================================
+-- SEED SQL PARA POLLA MUNDIAL 2026
+-- ============================================
+-- Ejecutar DESPUÉS de schema.sql
+-- ============================================
+
+-- ============================================
+-- EQUIPOS - 48 equipos organizados por grupos
+-- ============================================
+-- NOTA: Este script usa ON CONFLICT DO NOTHING para ser idempotente
+-- Puede ejecutarse múltiples veces sin errores
+
+-- Grupo A
+INSERT INTO teams (name, flag_emoji, group_id, confederation, fifa_ranking) VALUES
+('México', '🇲🇽', 'A', 'CONCACAF', 15),
+('Corea del Sur', '🇰🇷', 'A', 'AFC', 23),
+('República Checa', '🇨🇿', 'A', 'UEFA', 36),
+('Sudáfrica', '🇿🇦', 'A', 'CAF', 58)
+ON CONFLICT (name) DO NOTHING;
+
+-- Grupo B
+INSERT INTO teams (name, flag_emoji, group_id, confederation, fifa_ranking) VALUES
+('Canadá', '🇨🇦', 'B', 'CONCACAF', 40),
+('Suiza', '🇨🇭', 'B', 'UEFA', 14),
+('Qatar', '🇶🇦', 'B', 'AFC', 61),
+('Bosnia y Herzegovina', '🇧🇦', 'B', 'UEFA', 65)
+ON CONFLICT (name) DO NOTHING;
+
+-- Grupo C
+INSERT INTO teams (name, flag_emoji, group_id, confederation, fifa_ranking) VALUES
+('Brasil', '🇧🇷', 'C', 'CONMEBOL', 4),
+('Marruecos', '🇲🇦', 'C', 'CAF', 13),
+('Escocia', '🏴󠁧󠁢󠁳󠁣󠁴󠁿', 'C', 'UEFA', 39),
+('Haití', '🇭🇹', 'C', 'CONCACAF', 85)
+ON CONFLICT (name) DO NOTHING;
+
+-- Grupo D
+INSERT INTO teams (name, flag_emoji, group_id, confederation, fifa_ranking) VALUES
+('Estados Unidos', '🇺🇸', 'D', 'CONCACAF', 11),
+('Australia', '🇦🇺', 'D', 'AFC', 25),
+('Turquía', '🇹🇷', 'D', 'UEFA', 28),
+('Paraguay', '🇵🇾', 'D', 'CONMEBOL', 47)
+ON CONFLICT (name) DO NOTHING;
+
+-- Grupo E
+INSERT INTO teams (name, flag_emoji, group_id, confederation, fifa_ranking) VALUES
+('Alemania', '🇩🇪', 'E', 'UEFA', 12),
+('Costa de Marfil', '🇨🇮', 'E', 'CAF', 31),
+('Ecuador', '🇪🇨', 'E', 'CONMEBOL', 30),
+('Curazao', '🇨🇼', 'E', 'CONCACAF', 82)
+ON CONFLICT (name) DO NOTHING;
+
+-- Grupo F
+INSERT INTO teams (name, flag_emoji, group_id, confederation, fifa_ranking) VALUES
+('Países Bajos', '🇳🇱', 'F', 'UEFA', 7),
+('Japón', '🇯🇵', 'F', 'AFC', 18),
+('Suecia', '🇸🇪', 'F', 'UEFA', 24),
+('Túnez', '🇹🇳', 'F', 'CAF', 41)
+ON CONFLICT (name) DO NOTHING;
+
+-- Grupo G
+INSERT INTO teams (name, flag_emoji, group_id, confederation, fifa_ranking) VALUES
+('Bélgica', '🇧🇪', 'G', 'UEFA', 5),
+('Irán', '🇮🇷', 'G', 'AFC', 21),
+('Egipto', '🇪🇬', 'G', 'CAF', 33),
+('Nueva Zelanda', '🇳🇿', 'G', 'OFC', 95)
+ON CONFLICT (name) DO NOTHING;
+
+-- Grupo H
+INSERT INTO teams (name, flag_emoji, group_id, confederation, fifa_ranking) VALUES
+('España', '🇪🇸', 'H', 'UEFA', 8),
+('Uruguay', '🇺🇾', 'H', 'CONMEBOL', 16),
+('Arabia Saudita', '🇸🇦', 'H', 'AFC', 53),
+('Cabo Verde', '🇨🇻', 'H', 'CAF', 73)
+ON CONFLICT (name) DO NOTHING;
+
+-- Grupo I
+INSERT INTO teams (name, flag_emoji, group_id, confederation, fifa_ranking) VALUES
+('Francia', '🇫🇷', 'I', 'UEFA', 2),
+('Senegal', '🇸🇳', 'I', 'CAF', 19),
+('Noruega', '🇳🇴', 'I', 'UEFA', 45),
+('Irak', '🇮🇶', 'I', 'AFC', 70)
+ON CONFLICT (name) DO NOTHING;
+
+-- Grupo J
+INSERT INTO teams (name, flag_emoji, group_id, confederation, fifa_ranking) VALUES
+('Argentina', '🇦🇷', 'J', 'CONMEBOL', 1),
+('Argelia', '🇩🇿', 'J', 'CAF', 37),
+('Austria', '🇦🇹', 'J', 'UEFA', 26),
+('Jordania', '🇯🇴', 'J', 'AFC', 68)
+ON CONFLICT (name) DO NOTHING;
+
+-- Grupo K (Colombia)
+INSERT INTO teams (name, flag_emoji, group_id, confederation, fifa_ranking) VALUES
+('Portugal', '🇵🇹', 'K', 'UEFA', 6),
+('Colombia', '🇨🇴', 'K', 'CONMEBOL', 9),
+('RD del Congo', '🇨🇩', 'K', 'CAF', 48),
+('Uzbekistán', '🇺🇿', 'K', 'AFC', 63)
+ON CONFLICT (name) DO NOTHING;
+
+-- Grupo L
+INSERT INTO teams (name, flag_emoji, group_id, confederation, fifa_ranking) VALUES
+('Inglaterra', '🏴󠁧󠁢󠁥󠁮󠁧󠁿', 'L', 'UEFA', 3),
+('Croacia', '🇭🇷', 'L', 'UEFA', 10),
+('Panamá', '🇵🇦', 'L', 'CONCACAF', 52),
+('Ghana', '🇬🇭', 'L', 'CAF', 64)
+ON CONFLICT (name) DO NOTHING;
+
+-- ============================================
+-- PARTIDOS FASE DE GRUPOS (1-72)
+-- ============================================
+-- Fechas y horarios ya están en UTC
+-- ============================================
+
+-- Grupo A (Partidos 1-6)
+INSERT INTO matches (match_number, phase, group_id, home_team_id, away_team_id, match_date, venue, city) VALUES
+(1, 'groups', 'A', (SELECT id FROM teams WHERE name = 'México'), (SELECT id FROM teams WHERE name = 'Sudáfrica'), '2026-06-11 19:00:00+00', 'Azteca', 'CDMX'),
+(2, 'groups', 'A', (SELECT id FROM teams WHERE name = 'Corea del Sur'), (SELECT id FROM teams WHERE name = 'República Checa'), '2026-06-12 02:00:00+00', 'Akron', 'Guadalajara'),
+(3, 'groups', 'A', (SELECT id FROM teams WHERE name = 'República Checa'), (SELECT id FROM teams WHERE name = 'Sudáfrica'), '2026-06-18 16:00:00+00', 'Mercedes-Benz', 'Atlanta'),
+(4, 'groups', 'A', (SELECT id FROM teams WHERE name = 'México'), (SELECT id FROM teams WHERE name = 'Corea del Sur'), '2026-06-19 01:00:00+00', 'Akron', 'Guadalajara'),
+(5, 'groups', 'A', (SELECT id FROM teams WHERE name = 'República Checa'), (SELECT id FROM teams WHERE name = 'México'), '2026-06-25 01:00:00+00', 'Azteca', 'CDMX'),
+(6, 'groups', 'A', (SELECT id FROM teams WHERE name = 'Sudáfrica'), (SELECT id FROM teams WHERE name = 'Corea del Sur'), '2026-06-25 01:00:00+00', 'BBVA', 'Monterrey');
+
+-- Grupo B (Partidos 7-12)
+INSERT INTO matches (match_number, phase, group_id, home_team_id, away_team_id, match_date, venue, city) VALUES
+(7, 'groups', 'B', (SELECT id FROM teams WHERE name = 'Canadá'), (SELECT id FROM teams WHERE name = 'Bosnia y Herzegovina'), '2026-06-12 19:00:00+00', 'BMO Field', 'Toronto'),
+(8, 'groups', 'B', (SELECT id FROM teams WHERE name = 'Qatar'), (SELECT id FROM teams WHERE name = 'Suiza'), '2026-06-13 19:00:00+00', 'Levi''s', 'San Francisco'),
+(9, 'groups', 'B', (SELECT id FROM teams WHERE name = 'Suiza'), (SELECT id FROM teams WHERE name = 'Bosnia y Herzegovina'), '2026-06-18 19:00:00+00', 'SoFi', 'Los Ángeles'),
+(10, 'groups', 'B', (SELECT id FROM teams WHERE name = 'Canadá'), (SELECT id FROM teams WHERE name = 'Qatar'), '2026-06-18 22:00:00+00', 'BC Place', 'Vancouver'),
+(11, 'groups', 'B', (SELECT id FROM teams WHERE name = 'Suiza'), (SELECT id FROM teams WHERE name = 'Canadá'), '2026-06-24 19:00:00+00', 'BC Place', 'Vancouver'),
+(12, 'groups', 'B', (SELECT id FROM teams WHERE name = 'Bosnia y Herzegovina'), (SELECT id FROM teams WHERE name = 'Qatar'), '2026-06-24 19:00:00+00', 'Lumen Field', 'Seattle');
+
+-- Grupo C (Partidos 13-18)
+INSERT INTO matches (match_number, phase, group_id, home_team_id, away_team_id, match_date, venue, city) VALUES
+(13, 'groups', 'C', (SELECT id FROM teams WHERE name = 'Brasil'), (SELECT id FROM teams WHERE name = 'Marruecos'), '2026-06-13 22:00:00+00', 'MetLife', 'Nueva York/NJ'),
+(14, 'groups', 'C', (SELECT id FROM teams WHERE name = 'Haití'), (SELECT id FROM teams WHERE name = 'Escocia'), '2026-06-14 01:00:00+00', 'Gillette', 'Boston'),
+(15, 'groups', 'C', (SELECT id FROM teams WHERE name = 'Escocia'), (SELECT id FROM teams WHERE name = 'Marruecos'), '2026-06-19 22:00:00+00', 'Gillette', 'Boston'),
+(16, 'groups', 'C', (SELECT id FROM teams WHERE name = 'Brasil'), (SELECT id FROM teams WHERE name = 'Haití'), '2026-06-20 01:00:00+00', 'Lincoln', 'Filadelfia'),
+(17, 'groups', 'C', (SELECT id FROM teams WHERE name = 'Escocia'), (SELECT id FROM teams WHERE name = 'Brasil'), '2026-06-24 22:00:00+00', 'Hard Rock', 'Miami'),
+(18, 'groups', 'C', (SELECT id FROM teams WHERE name = 'Marruecos'), (SELECT id FROM teams WHERE name = 'Haití'), '2026-06-24 22:00:00+00', 'Mercedes-Benz', 'Atlanta');
+
+-- Grupo D (Partidos 19-24)
+INSERT INTO matches (match_number, phase, group_id, home_team_id, away_team_id, match_date, venue, city) VALUES
+(19, 'groups', 'D', (SELECT id FROM teams WHERE name = 'Estados Unidos'), (SELECT id FROM teams WHERE name = 'Paraguay'), '2026-06-13 01:00:00+00', 'SoFi', 'Los Ángeles'),
+(20, 'groups', 'D', (SELECT id FROM teams WHERE name = 'Australia'), (SELECT id FROM teams WHERE name = 'Turquía'), '2026-06-14 04:00:00+00', 'BC Place', 'Vancouver'),
+(21, 'groups', 'D', (SELECT id FROM teams WHERE name = 'Estados Unidos'), (SELECT id FROM teams WHERE name = 'Australia'), '2026-06-19 19:00:00+00', 'Lumen Field', 'Seattle'),
+(22, 'groups', 'D', (SELECT id FROM teams WHERE name = 'Turquía'), (SELECT id FROM teams WHERE name = 'Paraguay'), '2026-06-20 04:00:00+00', 'Levi''s', 'San Francisco'),
+(23, 'groups', 'D', (SELECT id FROM teams WHERE name = 'Turquía'), (SELECT id FROM teams WHERE name = 'Estados Unidos'), '2026-06-26 02:00:00+00', 'SoFi', 'Los Ángeles'),
+(24, 'groups', 'D', (SELECT id FROM teams WHERE name = 'Paraguay'), (SELECT id FROM teams WHERE name = 'Australia'), '2026-06-26 02:00:00+00', 'Levi''s', 'San Francisco');
+
+-- Grupo E (Partidos 25-30)
+INSERT INTO matches (match_number, phase, group_id, home_team_id, away_team_id, match_date, venue, city) VALUES
+(25, 'groups', 'E', (SELECT id FROM teams WHERE name = 'Alemania'), (SELECT id FROM teams WHERE name = 'Curazao'), '2026-06-14 17:00:00+00', 'NRG', 'Houston'),
+(26, 'groups', 'E', (SELECT id FROM teams WHERE name = 'Costa de Marfil'), (SELECT id FROM teams WHERE name = 'Ecuador'), '2026-06-14 23:00:00+00', 'Lincoln', 'Filadelfia'),
+(27, 'groups', 'E', (SELECT id FROM teams WHERE name = 'Alemania'), (SELECT id FROM teams WHERE name = 'Costa de Marfil'), '2026-06-20 20:00:00+00', 'BMO Field', 'Toronto'),
+(28, 'groups', 'E', (SELECT id FROM teams WHERE name = 'Ecuador'), (SELECT id FROM teams WHERE name = 'Curazao'), '2026-06-21 00:00:00+00', 'Arrowhead', 'Kansas City'),
+(29, 'groups', 'E', (SELECT id FROM teams WHERE name = 'Ecuador'), (SELECT id FROM teams WHERE name = 'Alemania'), '2026-06-25 20:00:00+00', 'MetLife', 'Nueva York/NJ'),
+(30, 'groups', 'E', (SELECT id FROM teams WHERE name = 'Curazao'), (SELECT id FROM teams WHERE name = 'Costa de Marfil'), '2026-06-25 20:00:00+00', 'Lincoln', 'Filadelfia');
+
+-- Grupo F (Partidos 31-36)
+INSERT INTO matches (match_number, phase, group_id, home_team_id, away_team_id, match_date, venue, city) VALUES
+(31, 'groups', 'F', (SELECT id FROM teams WHERE name = 'Países Bajos'), (SELECT id FROM teams WHERE name = 'Japón'), '2026-06-14 20:00:00+00', 'AT&T Stadium', 'Dallas'),
+(32, 'groups', 'F', (SELECT id FROM teams WHERE name = 'Suecia'), (SELECT id FROM teams WHERE name = 'Túnez'), '2026-06-15 02:00:00+00', 'BBVA', 'Monterrey'),
+(33, 'groups', 'F', (SELECT id FROM teams WHERE name = 'Países Bajos'), (SELECT id FROM teams WHERE name = 'Suecia'), '2026-06-20 17:00:00+00', 'NRG', 'Houston'),
+(34, 'groups', 'F', (SELECT id FROM teams WHERE name = 'Túnez'), (SELECT id FROM teams WHERE name = 'Japón'), '2026-06-21 04:00:00+00', 'Akron', 'Guadalajara'),
+(35, 'groups', 'F', (SELECT id FROM teams WHERE name = 'Japón'), (SELECT id FROM teams WHERE name = 'Suecia'), '2026-06-25 23:00:00+00', 'AT&T Stadium', 'Dallas'),
+(36, 'groups', 'F', (SELECT id FROM teams WHERE name = 'Túnez'), (SELECT id FROM teams WHERE name = 'Países Bajos'), '2026-06-25 23:00:00+00', 'Arrowhead', 'Kansas City');
+
+-- Grupo G (Partidos 37-42)
+INSERT INTO matches (match_number, phase, group_id, home_team_id, away_team_id, match_date, venue, city) VALUES
+(37, 'groups', 'G', (SELECT id FROM teams WHERE name = 'Bélgica'), (SELECT id FROM teams WHERE name = 'Egipto'), '2026-06-15 19:00:00+00', 'Lumen Field', 'Seattle'),
+(38, 'groups', 'G', (SELECT id FROM teams WHERE name = 'Irán'), (SELECT id FROM teams WHERE name = 'Nueva Zelanda'), '2026-06-16 01:00:00+00', 'SoFi', 'Los Ángeles'),
+(39, 'groups', 'G', (SELECT id FROM teams WHERE name = 'Bélgica'), (SELECT id FROM teams WHERE name = 'Irán'), '2026-06-21 19:00:00+00', 'SoFi', 'Los Ángeles'),
+(40, 'groups', 'G', (SELECT id FROM teams WHERE name = 'Nueva Zelanda'), (SELECT id FROM teams WHERE name = 'Egipto'), '2026-06-22 01:00:00+00', 'BC Place', 'Vancouver'),
+(41, 'groups', 'G', (SELECT id FROM teams WHERE name = 'Egipto'), (SELECT id FROM teams WHERE name = 'Irán'), '2026-06-27 03:00:00+00', 'Lumen Field', 'Seattle'),
+(42, 'groups', 'G', (SELECT id FROM teams WHERE name = 'Nueva Zelanda'), (SELECT id FROM teams WHERE name = 'Bélgica'), '2026-06-27 03:00:00+00', 'BC Place', 'Vancouver');
+
+-- Grupo H (Partidos 43-48)
+INSERT INTO matches (match_number, phase, group_id, home_team_id, away_team_id, match_date, venue, city) VALUES
+(43, 'groups', 'H', (SELECT id FROM teams WHERE name = 'España'), (SELECT id FROM teams WHERE name = 'Cabo Verde'), '2026-06-15 16:00:00+00', 'Mercedes-Benz', 'Atlanta'),
+(44, 'groups', 'H', (SELECT id FROM teams WHERE name = 'Arabia Saudita'), (SELECT id FROM teams WHERE name = 'Uruguay'), '2026-06-15 22:00:00+00', 'Hard Rock', 'Miami'),
+(45, 'groups', 'H', (SELECT id FROM teams WHERE name = 'España'), (SELECT id FROM teams WHERE name = 'Arabia Saudita'), '2026-06-21 16:00:00+00', 'Mercedes-Benz', 'Atlanta'),
+(46, 'groups', 'H', (SELECT id FROM teams WHERE name = 'Uruguay'), (SELECT id FROM teams WHERE name = 'Cabo Verde'), '2026-06-21 22:00:00+00', 'Hard Rock', 'Miami'),
+(47, 'groups', 'H', (SELECT id FROM teams WHERE name = 'Cabo Verde'), (SELECT id FROM teams WHERE name = 'Arabia Saudita'), '2026-06-27 00:00:00+00', 'NRG', 'Houston'),
+(48, 'groups', 'H', (SELECT id FROM teams WHERE name = 'Uruguay'), (SELECT id FROM teams WHERE name = 'España'), '2026-06-27 00:00:00+00', 'Akron', 'Guadalajara');
+
+-- Grupo I (Partidos 49-54)
+INSERT INTO matches (match_number, phase, group_id, home_team_id, away_team_id, match_date, venue, city) VALUES
+(49, 'groups', 'I', (SELECT id FROM teams WHERE name = 'Francia'), (SELECT id FROM teams WHERE name = 'Senegal'), '2026-06-16 19:00:00+00', 'MetLife', 'Nueva York/NJ'),
+(50, 'groups', 'I', (SELECT id FROM teams WHERE name = 'Irak'), (SELECT id FROM teams WHERE name = 'Noruega'), '2026-06-16 22:00:00+00', 'Gillette', 'Boston'),
+(51, 'groups', 'I', (SELECT id FROM teams WHERE name = 'Francia'), (SELECT id FROM teams WHERE name = 'Irak'), '2026-06-22 21:00:00+00', 'Lincoln', 'Filadelfia'),
+(52, 'groups', 'I', (SELECT id FROM teams WHERE name = 'Noruega'), (SELECT id FROM teams WHERE name = 'Senegal'), '2026-06-23 00:00:00+00', 'MetLife', 'Nueva York/NJ'),
+(53, 'groups', 'I', (SELECT id FROM teams WHERE name = 'Noruega'), (SELECT id FROM teams WHERE name = 'Francia'), '2026-06-26 19:00:00+00', 'Gillette', 'Boston'),
+(54, 'groups', 'I', (SELECT id FROM teams WHERE name = 'Senegal'), (SELECT id FROM teams WHERE name = 'Irak'), '2026-06-26 19:00:00+00', 'BMO Field', 'Toronto');
+
+-- Grupo J (Partidos 55-60)
+INSERT INTO matches (match_number, phase, group_id, home_team_id, away_team_id, match_date, venue, city) VALUES
+(55, 'groups', 'J', (SELECT id FROM teams WHERE name = 'Argentina'), (SELECT id FROM teams WHERE name = 'Argelia'), '2026-06-17 01:00:00+00', 'Arrowhead', 'Kansas City'),
+(56, 'groups', 'J', (SELECT id FROM teams WHERE name = 'Austria'), (SELECT id FROM teams WHERE name = 'Jordania'), '2026-06-17 04:00:00+00', 'Levi''s', 'San Francisco'),
+(57, 'groups', 'J', (SELECT id FROM teams WHERE name = 'Argentina'), (SELECT id FROM teams WHERE name = 'Austria'), '2026-06-22 17:00:00+00', 'AT&T Stadium', 'Dallas'),
+(58, 'groups', 'J', (SELECT id FROM teams WHERE name = 'Jordania'), (SELECT id FROM teams WHERE name = 'Argelia'), '2026-06-23 03:00:00+00', 'Levi''s', 'San Francisco'),
+(59, 'groups', 'J', (SELECT id FROM teams WHERE name = 'Argelia'), (SELECT id FROM teams WHERE name = 'Austria'), '2026-06-28 02:00:00+00', 'Arrowhead', 'Kansas City'),
+(60, 'groups', 'J', (SELECT id FROM teams WHERE name = 'Jordania'), (SELECT id FROM teams WHERE name = 'Argentina'), '2026-06-28 02:00:00+00', 'AT&T Stadium', 'Dallas');
+
+-- Grupo K - Colombia (Partidos 61-66)
+INSERT INTO matches (match_number, phase, group_id, home_team_id, away_team_id, match_date, venue, city) VALUES
+(61, 'groups', 'K', (SELECT id FROM teams WHERE name = 'Portugal'), (SELECT id FROM teams WHERE name = 'RD del Congo'), '2026-06-17 17:00:00+00', 'NRG', 'Houston'),
+(62, 'groups', 'K', (SELECT id FROM teams WHERE name = 'Uzbekistán'), (SELECT id FROM teams WHERE name = 'Colombia'), '2026-06-18 02:00:00+00', 'Azteca', 'CDMX'),
+(63, 'groups', 'K', (SELECT id FROM teams WHERE name = 'Portugal'), (SELECT id FROM teams WHERE name = 'Uzbekistán'), '2026-06-23 17:00:00+00', 'NRG', 'Houston'),
+(64, 'groups', 'K', (SELECT id FROM teams WHERE name = 'Colombia'), (SELECT id FROM teams WHERE name = 'RD del Congo'), '2026-06-24 02:00:00+00', 'Akron', 'Guadalajara'),
+(65, 'groups', 'K', (SELECT id FROM teams WHERE name = 'Colombia'), (SELECT id FROM teams WHERE name = 'Portugal'), '2026-06-27 23:30:00+00', 'Hard Rock', 'Miami'),
+(66, 'groups', 'K', (SELECT id FROM teams WHERE name = 'RD del Congo'), (SELECT id FROM teams WHERE name = 'Uzbekistán'), '2026-06-27 23:30:00+00', 'Mercedes-Benz', 'Atlanta');
+
+-- Grupo L (Partidos 67-72)
+INSERT INTO matches (match_number, phase, group_id, home_team_id, away_team_id, match_date, venue, city) VALUES
+(67, 'groups', 'L', (SELECT id FROM teams WHERE name = 'Inglaterra'), (SELECT id FROM teams WHERE name = 'Croacia'), '2026-06-17 20:00:00+00', 'AT&T Stadium', 'Dallas'),
+(68, 'groups', 'L', (SELECT id FROM teams WHERE name = 'Ghana'), (SELECT id FROM teams WHERE name = 'Panamá'), '2026-06-17 23:00:00+00', 'BMO Field', 'Toronto'),
+(69, 'groups', 'L', (SELECT id FROM teams WHERE name = 'Inglaterra'), (SELECT id FROM teams WHERE name = 'Ghana'), '2026-06-23 20:00:00+00', 'Gillette', 'Boston'),
+(70, 'groups', 'L', (SELECT id FROM teams WHERE name = 'Panamá'), (SELECT id FROM teams WHERE name = 'Croacia'), '2026-06-23 23:00:00+00', 'BMO Field', 'Toronto'),
+(71, 'groups', 'L', (SELECT id FROM teams WHERE name = 'Panamá'), (SELECT id FROM teams WHERE name = 'Inglaterra'), '2026-06-27 21:00:00+00', 'MetLife', 'Nueva York/NJ'),
+(72, 'groups', 'L', (SELECT id FROM teams WHERE name = 'Croacia'), (SELECT id FROM teams WHERE name = 'Ghana'), '2026-06-27 21:00:00+00', 'Lincoln', 'Filadelfia');
+
+-- ============================================
+-- PARTIDOS ELIMINATORIOS (73-104)
+-- ============================================
+-- Equipos aún no definidos, usar labels
+-- ============================================
+
+-- OCTAVOS DE FINAL - Round of 16 (73-88)
+INSERT INTO matches (match_number, phase, home_team_label, away_team_label, match_date, venue, city) VALUES
+(73, 'r16', '1° Grupo A', '2° Grupo B', '2026-06-30 19:00:00+00', 'MetLife', 'Nueva York/NJ'),
+(74, 'r16', '1° Grupo C', '2° Grupo D', '2026-06-30 22:00:00+00', 'AT&T Stadium', 'Dallas'),
+(75, 'r16', '1° Grupo E', '2° Grupo F', '2026-07-01 01:00:00+00', 'SoFi', 'Los Ángeles'),
+(76, 'r16', '1° Grupo G', '2° Grupo H', '2026-07-01 19:00:00+00', 'Levi''s', 'San Francisco'),
+(77, 'r16', '1° Grupo I', '2° Grupo J', '2026-07-01 22:00:00+00', 'Hard Rock', 'Miami'),
+(78, 'r16', '1° Grupo K', '2° Grupo L', '2026-07-02 01:00:00+00', 'Gillette', 'Boston'),
+(79, 'r16', '1° Grupo B', '2° Grupo A', '2026-07-02 19:00:00+00', 'Lincoln', 'Filadelfia'),
+(80, 'r16', '1° Grupo D', '2° Grupo C', '2026-07-02 22:00:00+00', 'Arrowhead', 'Kansas City'),
+(81, 'r16', '1° Grupo F', '2° Grupo E', '2026-07-03 01:00:00+00', 'Mercedes-Benz', 'Atlanta'),
+(82, 'r16', '1° Grupo H', '2° Grupo G', '2026-07-03 19:00:00+00', 'NRG', 'Houston'),
+(83, 'r16', '1° Grupo J', '2° Grupo I', '2026-07-03 22:00:00+00', 'BMO Field', 'Toronto'),
+(84, 'r16', '1° Grupo L', '2° Grupo K', '2026-07-04 01:00:00+00', 'BC Place', 'Vancouver'),
+(85, 'r16', '3° Mejor A/B/C/D', '2° Grupo I', '2026-07-04 19:00:00+00', 'Lumen Field', 'Seattle'),
+(86, 'r16', '3° Mejor E/F/G/H', '2° Grupo K', '2026-07-04 22:00:00+00', 'Azteca', 'CDMX'),
+(87, 'r16', '3° Mejor I/J/K/L', '2° Grupo E', '2026-07-05 01:00:00+00', 'BBVA', 'Monterrey'),
+(88, 'r16', '3° Mejor A/B/C/D', '2° Grupo G', '2026-07-05 19:00:00+00', 'Akron', 'Guadalajara');
+
+-- CUARTOS DE FINAL - Quarter Finals (89-96)
+INSERT INTO matches (match_number, phase, home_team_label, away_team_label, match_date, venue, city) VALUES
+(89, 'r8', 'Ganador P73', 'Ganador P74', '2026-07-09 19:00:00+00', 'SoFi', 'Los Ángeles'),
+(90, 'r8', 'Ganador P75', 'Ganador P76', '2026-07-09 22:00:00+00', 'Arrowhead', 'Kansas City'),
+(91, 'r8', 'Ganador P77', 'Ganador P78', '2026-07-10 01:00:00+00', 'MetLife', 'Nueva York/NJ'),
+(92, 'r8', 'Ganador P79', 'Ganador P80', '2026-07-10 19:00:00+00', 'Gillette', 'Boston'),
+(93, 'r8', 'Ganador P81', 'Ganador P82', '2026-07-10 22:00:00+00', 'AT&T Stadium', 'Dallas'),
+(94, 'r8', 'Ganador P83', 'Ganador P84', '2026-07-11 01:00:00+00', 'Hard Rock', 'Miami'),
+(95, 'r8', 'Ganador P85', 'Ganador P86', '2026-07-11 19:00:00+00', 'Mercedes-Benz', 'Atlanta'),
+(96, 'r8', 'Ganador P87', 'Ganador P88', '2026-07-11 22:00:00+00', 'NRG', 'Houston');
+
+-- SEMIFINALES - Semi Finals (97-100)
+INSERT INTO matches (match_number, phase, home_team_label, away_team_label, match_date, venue, city) VALUES
+(97, 'r4', 'Ganador P89', 'Ganador P90', '2026-07-14 01:00:00+00', 'AT&T Stadium', 'Dallas'),
+(98, 'r4', 'Ganador P91', 'Ganador P92', '2026-07-14 22:00:00+00', 'MetLife', 'Nueva York/NJ'),
+(99, 'r4', 'Ganador P93', 'Ganador P94', '2026-07-15 01:00:00+00', 'AT&T Stadium', 'Dallas'),
+(100, 'r4', 'Ganador P95', 'Ganador P96', '2026-07-15 22:00:00+00', 'Mercedes-Benz', 'Atlanta');
+
+-- SEMIFINALES (101-102)
+INSERT INTO matches (match_number, phase, home_team_label, away_team_label, match_date, venue, city) VALUES
+(101, 'sf', 'Ganador P97', 'Ganador P98', '2026-07-18 01:00:00+00', 'AT&T Stadium', 'Dallas'),
+(102, 'sf', 'Ganador P99', 'Ganador P100', '2026-07-19 01:00:00+00', 'MetLife', 'Nueva York/NJ');
+
+-- TERCER PUESTO (103)
+INSERT INTO matches (match_number, phase, home_team_label, away_team_label, match_date, venue, city) VALUES
+(103, '3rd', 'Perdedor P101', 'Perdedor P102', '2026-07-18 19:00:00+00', 'Hard Rock', 'Miami');
+
+-- FINAL (104)
+INSERT INTO matches (match_number, phase, home_team_label, away_team_label, match_date, venue, city) VALUES
+(104, 'final', 'Ganador P101', 'Ganador P102', '2026-07-19 19:00:00+00', 'MetLife', 'Nueva York/NJ');

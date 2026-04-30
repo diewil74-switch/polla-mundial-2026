@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+:root {
+  --red-600: #dc2626;
+  --red-300: #fca5a5;
+  --red-50: #fef2f2;
+  --slate-800: #1f2937;
+  --slate-900: #0f172a;
+}
+
+@theme inline {
+  --font-sans: var(--font-albert-sans);
+}
+
+body {
+  font-family: var(--font-albert-sans), system-ui, -apple-system, sans-serif;
+}
