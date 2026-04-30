@@ -68,15 +68,10 @@ export default function RegisterPage() {
         return
       }
 
-      // Create user account
+      // Create user account without metadata to avoid header encoding issues
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            display_name: displayName,
-          },
-        },
       })
 
       if (signUpError) {
@@ -85,7 +80,13 @@ export default function RegisterPage() {
       }
 
       if (data.user) {
-        // The trigger in the database will automatically create the profile
+        // Update the profile with display_name after user creation
+        // The trigger in the database will automatically create the profile first
+        await supabase
+          .from('profiles')
+          .update({ display_name: displayName })
+          .eq('id', data.user.id)
+
         router.push('/dashboard')
         router.refresh()
       }
