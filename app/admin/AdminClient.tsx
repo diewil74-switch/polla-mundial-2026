@@ -1112,7 +1112,7 @@ function BracketMatchCard({ match, teams, onAssign, onAssignBothTeams, onClearTe
               className="flex-1 px-3 py-2 border border-slate-300 rounded-lg font-semibold text-sm"
             >
               <option value="">Seleccionar equipo local...</option>
-              {teams.map((team: any) => (
+              {teams.map((team: { id: number; name: string; flag_emoji: string }) => (
                 <option key={team.id} value={team.id}>
                   {team.flag_emoji} {team.name}
                 </option>
@@ -1128,7 +1128,7 @@ function BracketMatchCard({ match, teams, onAssign, onAssignBothTeams, onClearTe
               className="flex-1 px-3 py-2 border border-slate-300 rounded-lg font-semibold text-sm"
             >
               <option value="">Seleccionar equipo visitante...</option>
-              {teams.map((team: any) => (
+              {teams.map((team: { id: number; name: string; flag_emoji: string }) => (
                 <option key={team.id} value={team.id}>
                   {team.flag_emoji} {team.name}
                 </option>
@@ -1424,7 +1424,7 @@ function RankingTab() {
 
     // Group predictions by match_id to identify unique exact scores
     const predictionsByMatch = new Map<number, any[]>()
-    allPredictions?.forEach((pred) => {
+    allPredictions?.forEach((pred: any) => {
       const matchId = pred.match.id
       if (!predictionsByMatch.has(matchId)) {
         predictionsByMatch.set(matchId, [])
@@ -1453,7 +1453,7 @@ function RankingTab() {
     let correctGoal = 0
     let correctQualifier = 0
 
-    userPredictions.forEach((pred) => {
+    userPredictions.forEach((pred: any) => {
       if (pred.match.phase === 'groups') {
         // Group stage - check each condition directly
         const isExactScore =
@@ -1519,18 +1519,18 @@ function RankingTab() {
         // Get user's predicted standings for this group
         const groupTeams = allTeams.filter((t: any) => t.group_id === groupId)
         const groupPredictions = userPredictions.filter(
-          (p) => p.match?.phase === 'groups' && p.match?.group_id === groupId
+          (p: any) => p.match?.phase === 'groups' && p.match?.group_id === groupId
         )
 
         // Calculate predicted standings
         const predictedStandings = groupTeams.map((team: any) => {
           const teamPreds = groupPredictions.filter(
-            (p) => p.match.home_team_id === team.id || p.match.away_team_id === team.id
+            (p: any) => p.match.home_team_id === team.id || p.match.away_team_id === team.id
           )
 
           let won = 0, drawn = 0, lost = 0, gf = 0, gc = 0
 
-          teamPreds.forEach((p) => {
+          teamPreds.forEach((p: any) => {
             const isHome = p.match.home_team_id === team.id
             const teamScore = isHome ? p.pred_home : p.pred_away
             const oppScore = isHome ? p.pred_away : p.pred_home
@@ -2486,7 +2486,7 @@ function GroupStandingsTab() {
                         }`}
                       >
                         <option value="">Seleccionar equipo...</option>
-                        {groupTeamsList.map((team: any) => (
+                        {groupTeamsList.map((team: { id: number; name: string; flag_emoji: string }) => (
                           <option key={team.id} value={team.id}>
                             {team.flag_emoji} {team.name}
                           </option>
