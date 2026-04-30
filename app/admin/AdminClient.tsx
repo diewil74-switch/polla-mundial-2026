@@ -1112,7 +1112,7 @@ function BracketMatchCard({ match, teams, onAssign, onAssignBothTeams, onClearTe
               className="flex-1 px-3 py-2 border border-slate-300 rounded-lg font-semibold text-sm"
             >
               <option value="">Seleccionar equipo local...</option>
-              {teams.map(team => (
+              {teams.map((team: any) => (
                 <option key={team.id} value={team.id}>
                   {team.flag_emoji} {team.name}
                 </option>
@@ -1128,7 +1128,7 @@ function BracketMatchCard({ match, teams, onAssign, onAssignBothTeams, onClearTe
               className="flex-1 px-3 py-2 border border-slate-300 rounded-lg font-semibold text-sm"
             >
               <option value="">Seleccionar equipo visitante...</option>
-              {teams.map(team => (
+              {teams.map((team: any) => (
                 <option key={team.id} value={team.id}>
                   {team.flag_emoji} {team.name}
                 </option>
@@ -2486,7 +2486,7 @@ function GroupStandingsTab() {
                         }`}
                       >
                         <option value="">Seleccionar equipo...</option>
-                        {groupTeamsList.map(team => (
+                        {groupTeamsList.map((team: any) => (
                           <option key={team.id} value={team.id}>
                             {team.flag_emoji} {team.name}
                           </option>
