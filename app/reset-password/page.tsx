@@ -5,23 +5,34 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
-export default function LoginPage() {
-  const [email, setEmail] = useState('')
+export default function ResetPasswordPage() {
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    // Validations
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden')
+      return
+    }
+
+    if (password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres')
+      return
+    }
+
     setLoading(true)
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { error } = await supabase.auth.updateUser({
+        password: password,
       })
 
       if (error) {
@@ -29,12 +40,11 @@ export default function LoginPage() {
         return
       }
 
-      if (data.user) {
-        router.push('/dashboard')
-        router.refresh()
-      }
+      // Success - redirect to dashboard
+      router.push('/dashboard')
+      router.refresh()
     } catch (err) {
-      setError('Error al iniciar sesión')
+      setError('Error al actualizar la contraseña')
     } finally {
       setLoading(false)
     }
@@ -49,12 +59,12 @@ export default function LoginPage() {
             <span className="inline-block mr-2">⚽</span>
             Polla Mundial 2026
           </h1>
-          <p className="text-slate-600">Inicia sesión para participar</p>
+          <p className="text-slate-600">Crea una nueva contraseña</p>
         </div>
 
-        {/* Login Form */}
+        {/* Reset Password Form */}
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-red-100">
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                 {error}
@@ -62,23 +72,8 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
-                Correo electrónico
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-all"
-                placeholder="tu@email.com"
-              />
-            </div>
-
-            <div>
               <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
-                Contraseña
+                Nueva contraseña
               </label>
               <input
                 id="password"
@@ -86,8 +81,25 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={6}
                 className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-all"
-                placeholder="••••••••"
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-2">
+                Confirmar nueva contraseña
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-all"
+                placeholder="Repite tu nueva contraseña"
               />
             </div>
 
@@ -96,28 +108,13 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Iniciando sesión...' : 'Entrar'}
+              {loading ? 'Actualizando...' : 'Cambiar contraseña'}
             </button>
           </form>
 
-          <div className="mt-4 text-center">
-            <Link href="/forgot-password" className="text-sm text-red-600 hover:text-red-700">
-              ¿Olvidaste tu contraseña?
-            </Link>
-          </div>
-
-          <div className="mt-4 text-center">
-            <p className="text-sm text-slate-600">
-              ¿No tienes cuenta?{' '}
-              <Link href="/register" className="text-red-600 hover:text-red-700 font-semibold">
-                Regístrate aquí
-              </Link>
-            </p>
-          </div>
-
-          <div className="mt-4 text-center">
-            <Link href="/rules" className="text-sm text-slate-500 hover:text-slate-700">
-              Ver reglas de puntuación
+          <div className="mt-6 text-center">
+            <Link href="/" className="text-sm text-red-600 hover:text-red-700">
+              Volver al inicio de sesión
             </Link>
           </div>
         </div>

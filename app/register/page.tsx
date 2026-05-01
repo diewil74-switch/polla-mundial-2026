@@ -69,6 +69,7 @@ export default function RegisterPage() {
       }
 
       // Create user account without metadata to avoid header encoding issues
+      // Email confirmation is disabled, so user will be logged in immediately
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -87,6 +88,7 @@ export default function RegisterPage() {
           .update({ display_name: displayName })
           .eq('id', data.user.id)
 
+        // Redirect to dashboard (email confirmation is disabled)
         router.push('/dashboard')
         router.refresh()
       }
