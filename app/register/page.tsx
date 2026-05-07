@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [userCount, setUserCount] = useState<number | null>(null)
   const [registrationClosed, setRegistrationClosed] = useState(false)
+  const [registeredEmail, setRegisteredEmail] = useState('')
   const router = useRouter()
   const supabase = createClient()
 
@@ -69,10 +70,12 @@ export default function RegisterPage() {
       }
 
       // Create user account without metadata to avoid header encoding issues
-      // Email confirmation is disabled, so user will be logged in immediately
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: 'https://polla-mundial-2026-seven.vercel.app/auth/confirm',
+        },
       })
 
       if (signUpError) {
@@ -88,15 +91,53 @@ export default function RegisterPage() {
           .update({ display_name: displayName })
           .eq('id', data.user.id)
 
-        // Redirect to dashboard (email confirmation is disabled)
-        router.push('/dashboard')
-        router.refresh()
+        // Show email confirmation message
+        setRegisteredEmail(email)
       }
     } catch (err) {
       setError('Error al crear la cuenta')
     } finally {
       setLoading(false)
     }
+  }
+
+  if (registeredEmail) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-white px-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-slate-800 mb-2">
+              <span className="inline-block mr-2">⚽</span>
+              Polla Mundial 2026
+            </h1>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-red-100">
+            <div className="text-center">
+              <div className="text-6xl mb-4">📧</div>
+              <h2 className="text-2xl font-bold text-slate-800 mb-4">
+                Confirma tu correo
+              </h2>
+              <p className="text-slate-600 mb-4">
+                Te enviamos un correo de confirmación a:
+              </p>
+              <p className="text-red-600 font-semibold mb-6">
+                {registeredEmail}
+              </p>
+              <p className="text-slate-600 mb-6">
+                Por favor revisa tu bandeja de entrada y haz clic en el enlace para activar tu cuenta.
+              </p>
+              <Link
+                href="/"
+                className="inline-block bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+              >
+                Volver al inicio de sesión
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (registrationClosed) {
