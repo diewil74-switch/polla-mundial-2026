@@ -141,7 +141,7 @@ export default function DashboardClient({ user, profile }: { user: User, profile
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'predictions' && <PredictionsTab userId={user.id} />}
-        {activeTab === 'calendar' && <CalendarTab />}
+        {activeTab === 'calendar' && <CalendarTab userId={user.id} />}
         {activeTab === 'groups' && <GroupsTab userId={user.id} />}
         {activeTab === 'bracket' && <BracketTab />}
         {activeTab === 'ranking' && <RankingTab currentUserId={user.id} />}
@@ -391,13 +391,14 @@ function MatchPredictionCard({
 }
 
 // Tab 2: Calendar
-function CalendarTab() {
+function CalendarTab({ userId }: { userId: string }) {
   const [matches, setMatches] = useState<Match[]>([])
+  const [predictions, setPredictions] = useState<Record<number, any>>({})
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {
-    loadMatches()
+    loadData()
 
     // Subscribe to realtime updates for match results
     const channel = supabase
@@ -410,7 +411,7 @@ function CalendarTab() {
           table: 'matches',
         },
         () => {
-          loadMatches()
+          loadData()
         }
       )
       .subscribe()
@@ -418,10 +419,11 @@ function CalendarTab() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [userId])
 
-  async function loadMatches() {
-    const { data } = await supabase
+  async function loadData() {
+    // Load matches
+    const { data: matchesData } = await supabase
       .from('matches')
       .select(`
         *,
@@ -430,7 +432,22 @@ function CalendarTab() {
       `)
       .order('match_date', { ascending: true })
 
-    if (data) setMatches(data as any)
+    // Load user predictions with points
+    const { data: predictionsData } = await supabase
+      .from('predictions')
+      .select('match_id, points_earned, calculated')
+      .eq('user_id', userId)
+
+    if (matchesData) setMatches(matchesData as any)
+
+    if (predictionsData) {
+      const predMap: Record<number, any> = {}
+      predictionsData.forEach((pred: any) => {
+        predMap[pred.match_id] = pred
+      })
+      setPredictions(predMap)
+    }
+
     setLoading(false)
   }
 
@@ -470,11 +487,12 @@ function CalendarTab() {
                     <th className="px-4 py-3 text-center">Resultado Final</th>
                     <th className="px-4 py-3 text-left">Sede</th>
                     <th className="px-4 py-3 text-center">Estado</th>
+                    <th className="px-4 py-3 text-center">Puntos</th>
                   </tr>
                 </thead>
                 <tbody>
                   {phaseMatches.map((match) => (
-                    <CalendarMatchCard key={match.id} match={match} />
+                    <CalendarMatchCard key={match.id} match={match} prediction={predictions[match.id]} />
                   ))}
                 </tbody>
               </table>
@@ -486,7 +504,7 @@ function CalendarTab() {
   )
 }
 
-function CalendarMatchCard({ match }: { match: Match }) {
+function CalendarMatchCard({ match, prediction }: { match: Match; prediction?: any }) {
   const matchDate = new Date(match.match_date)
   const colombiaTime = matchDate.toLocaleString('es-CO', {
     timeZone: 'America/Bogota',
@@ -508,6 +526,25 @@ function CalendarMatchCard({ match }: { match: Match }) {
 
   const homeTeamName = match.home_team?.name || match.home_team_label
   const awayTeamName = match.away_team?.name || match.away_team_label
+
+  // Calculate points display
+  let pointsDisplay
+  if (prediction && prediction.calculated && match.home_score !== null && match.away_score !== null) {
+    const points = prediction.points_earned || 0
+    if (points > 0) {
+      pointsDisplay = (
+        <span className="px-2 py-1 bg-green-100 text-green-700 text-sm font-bold rounded-full">
+          +{points}
+        </span>
+      )
+    } else {
+      pointsDisplay = <span className="text-slate-400 text-sm">0</span>
+    }
+  } else if (match.home_score === null || match.away_score === null) {
+    pointsDisplay = <span className="text-slate-400 text-sm">-</span>
+  } else {
+    pointsDisplay = <span className="text-slate-400 text-sm">-</span>
+  }
 
   return (
     <tr className="hover:bg-slate-50 border-b border-slate-100">
@@ -536,6 +573,7 @@ function CalendarMatchCard({ match }: { match: Match }) {
       </td>
       <td className="px-4 py-3 text-xs text-slate-600">{match.venue}</td>
       <td className="px-4 py-3 text-center">{statusBadge}</td>
+      <td className="px-4 py-3 text-center">{pointsDisplay}</td>
     </tr>
   )
 }
