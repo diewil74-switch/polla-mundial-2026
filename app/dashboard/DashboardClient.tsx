@@ -304,10 +304,13 @@ function MatchPredictionCard({
               <span className="font-semibold text-slate-800">{match.home_team?.name}</span>
             </div>
             {hasResult ? (
-              <div className="flex items-center gap-4">
-                <span className="text-2xl font-bold text-slate-800">{match.home_score}</span>
-                <span className="text-slate-400">-</span>
-                <span className="text-2xl font-bold text-slate-800">{match.away_score}</span>
+              <div className="flex flex-col items-center gap-1">
+                <p className="text-xs font-semibold text-slate-600">Marcador Final</p>
+                <div className="flex items-center gap-4">
+                  <span className="text-2xl font-bold text-slate-800">{match.home_score}</span>
+                  <span className="text-slate-400">-</span>
+                  <span className="text-2xl font-bold text-slate-800">{match.away_score}</span>
+                </div>
               </div>
             ) : (
               <span className="text-slate-400">vs</span>
@@ -320,70 +323,72 @@ function MatchPredictionCard({
           <p className="text-xs text-slate-500 mt-1">{match.venue}, {match.city}</p>
         </div>
 
-        <div className="flex items-center gap-4">
-          {!hasStarted ? (
-            <>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min="0"
-                  max="20"
-                  value={predHome}
-                  onChange={(e) => setPredHome(e.target.value)}
-                  className="w-16 px-2 py-2 border border-slate-300 rounded text-center font-semibold"
-                  placeholder="0"
-                />
-                <span className="text-slate-400">-</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="20"
-                  value={predAway}
-                  onChange={(e) => setPredAway(e.target.value)}
-                  className="w-16 px-2 py-2 border border-slate-300 rounded text-center font-semibold"
-                  placeholder="0"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    const home = parseInt(predHome) || 0
-                    const away = parseInt(predAway) || 0
-                    onSave(match.id, home, away)
-                  }}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
-                >
-                  {prediction ? 'Actualizar' : 'Guardar'}
-                </button>
-                {prediction && (
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-xs font-semibold text-slate-600">Predicción</p>
+          <div className="flex items-center gap-4">
+            {!hasStarted ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    max="20"
+                    value={predHome}
+                    onChange={(e) => setPredHome(e.target.value)}
+                    className="w-16 px-2 py-2 border border-slate-300 rounded text-center font-semibold"
+                    placeholder="0"
+                  />
+                  <span className="text-slate-400">-</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="20"
+                    value={predAway}
+                    onChange={(e) => setPredAway(e.target.value)}
+                    className="w-16 px-2 py-2 border border-slate-300 rounded text-center font-semibold"
+                    placeholder="0"
+                  />
+                </div>
+                <div className="flex gap-2">
                   <button
                     onClick={() => {
-                      if (confirm('¿Estás seguro de que quieres eliminar esta predicción?')) {
-                        onClear(match.id)
-                      }
+                      const home = parseInt(predHome) || 0
+                      const away = parseInt(predAway) || 0
+                      onSave(match.id, home, away)
                     }}
-                    className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
                   >
-                    Anular
+                    {prediction ? 'Actualizar' : 'Guardar'}
                   </button>
+                  {prediction && (
+                    <button
+                      onClick={() => {
+                        if (confirm('¿Estás seguro de que quieres eliminar esta predicción?')) {
+                          onClear(match.id)
+                        }
+                      }}
+                      className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+                    >
+                      Anular
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : prediction ? (
+              <div className="text-center">
+                <p className="text-lg font-bold text-slate-800">
+                  {prediction.pred_home} - {prediction.pred_away}
+                </p>
+                {hasResult && (
+                  <p className="text-sm font-semibold text-red-600 mt-1">
+                    {prediction.points_earned} pts
+                  </p>
                 )}
               </div>
-            </>
-          ) : prediction ? (
-            <div className="text-center">
-              <p className="text-xs text-slate-600 mb-1">Tu predicción</p>
-              <p className="text-lg font-bold text-slate-800">
-                {prediction.pred_home} - {prediction.pred_away}
-              </p>
-              {hasResult && (
-                <p className="text-sm font-semibold text-red-600 mt-1">
-                  {prediction.points_earned} pts
-                </p>
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-slate-500 italic">Sin predicción</p>
-          )}
+            ) : (
+              <p className="text-sm text-slate-500 italic">Sin predicción</p>
+            )}
+          </div>
         </div>
       </div>
     </div>
