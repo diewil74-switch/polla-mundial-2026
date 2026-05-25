@@ -2093,13 +2093,13 @@ function SpecialsTab() {
 }
 
 // ====================================
-// GROUP STANDINGS TAB
+// GROUP STANDINGS TAB (AUTO-CALCULATED FROM REAL RESULTS)
 // ====================================
 function GroupStandingsTab() {
   const [teams, setTeams] = useState<any[]>([])
+  const [matches, setMatches] = useState<any[]>([])
   const [standings, setStandings] = useState<any[]>([])
   const [saving, setSaving] = useState(false)
-  const [savedKey, setSavedKey] = useState<string | null>(null)
   const supabase = createClient()
 
   const GROUPS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
@@ -2109,60 +2109,121 @@ function GroupStandingsTab() {
   }, [])
 
   async function loadData() {
-    const { data: teamsData } = await supabase
-      .from('teams')
-      .select('*')
-      .order('name')
+    const [teamsRes, matchesRes, standingsRes] = await Promise.all([
+      supabase.from('teams').select('*').order('group_id'),
+      supabase.from('matches').select('*').eq('phase', 'groups').order('match_number'),
+      supabase.from('group_standings').select('*').order('group_id').order('position')
+    ])
 
-    const { data: standingsData } = await supabase
-      .from('group_standings')
-      .select('*')
-      .order('group_id')
-      .order('position')
-
-    if (teamsData) setTeams(teamsData)
-    if (standingsData) setStandings(standingsData)
+    if (teamsRes.data) setTeams(teamsRes.data)
+    if (matchesRes.data) setMatches(matchesRes.data)
+    if (standingsRes.data) setStandings(standingsRes.data)
   }
 
-  async function saveGroupStanding(groupId: string, position: number, teamId: number, qualified: boolean) {
-    const key = `${groupId}-${position}`
-    setSaving(true)
+  // Calculate standings for a group based on real match results
+  function calculateGroupStandings(groupId: string) {
+    const groupTeams = teams.filter(t => t.group_id === groupId)
+    const groupMatches = matches.filter(m => m.group_id === groupId)
 
+    const standings = groupTeams.map(team => {
+      const teamMatches = groupMatches.filter(
+        m => (m.home_team_id === team.id || m.away_team_id === team.id) &&
+             m.home_score !== null && m.away_score !== null
+      )
+
+      let won = 0, drawn = 0, lost = 0, gf = 0, gc = 0
+
+      teamMatches.forEach(match => {
+        const isHome = match.home_team_id === team.id
+        const teamScore = isHome ? match.home_score : match.away_score
+        const oppScore = isHome ? match.away_score : match.home_score
+
+        gf += teamScore
+        gc += oppScore
+
+        if (teamScore > oppScore) won++
+        else if (teamScore === oppScore) drawn++
+        else lost++
+      })
+
+      const points = won * 3 + drawn
+      const gd = gf - gc
+      const played = teamMatches.length
+
+      return { team, played, won, drawn, lost, gf, gc, gd, points }
+    })
+
+    // Sort by points, then goal difference, then goals for
+    standings.sort((a, b) => {
+      if (a.points !== b.points) return b.points - a.points
+      if (a.gd !== b.gd) return b.gd - a.gd
+      return b.gf - a.gf
+    })
+
+    return standings
+  }
+
+  // Auto-save calculated standings to database
+  async function updateGroupStandings(groupId: string) {
+    setSaving(true)
     try {
-      // Primero eliminar cualquier registro existente en esta posición
+      const calculatedStandings = calculateGroupStandings(groupId)
+
+      // Get existing qualified status
+      const existingStandings = standings.filter(s => s.group_id === groupId)
+
+      // Delete all existing standings for this group
       await supabase
         .from('group_standings')
         .delete()
         .eq('group_id', groupId)
-        .eq('position', position)
 
-      // Luego insertar el nuevo registro
+      // Insert new calculated standings (preserving qualified status if exists)
+      const newStandings = calculatedStandings.map((standing, index) => {
+        const existing = existingStandings.find(s => s.team_id === standing.team.id)
+        return {
+          group_id: groupId,
+          position: index + 1,
+          team_id: standing.team.id,
+          qualified: existing?.qualified || false
+        }
+      })
+
       const { error } = await supabase
         .from('group_standings')
-        .insert({
-          group_id: groupId,
-          position,
-          team_id: teamId,
-          qualified,
-        })
+        .insert(newStandings)
 
-      if (error) {
-        console.error('Supabase error:', error)
-        throw error
-      }
+      if (error) throw error
 
-      // Recargar datos inmediatamente
       await loadData()
-
-      // Recalcular puntos de todos los usuarios (bono de grupo puede haber cambiado)
       await recalculateGroupOrderBonuses()
 
-      // Mostrar indicador de éxito temporal
-      setSavedKey(key)
-      setTimeout(() => setSavedKey(null), 1500)
+      alert(`Tabla del Grupo ${groupId} actualizada correctamente`)
     } catch (error) {
-      console.error('Error al guardar:', error)
-      alert('Error al guardar: ' + JSON.stringify(error))
+      console.error('Error:', error)
+      alert('Error al actualizar: ' + JSON.stringify(error))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Update qualified status for a team
+  async function toggleQualified(groupId: string, teamId: number, currentQualified: boolean) {
+    setSaving(true)
+    try {
+      const { error } = await supabase
+        .from('group_standings')
+        .update({ qualified: !currentQualified })
+        .eq('group_id', groupId)
+        .eq('team_id', teamId)
+
+      if (error) throw error
+
+      await loadData()
+      await recalculateGroupOrderBonuses()
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error al actualizar: ' + JSON.stringify(error))
     } finally {
       setSaving(false)
     }
@@ -2170,24 +2231,15 @@ function GroupStandingsTab() {
 
   async function recalculateGroupOrderBonuses() {
     try {
-      // Load real group standings and teams
       const { data: realStandings } = await supabase
         .from('group_standings')
         .select('*')
         .order('group_id')
         .order('position')
 
-      const { data: allTeams } = await supabase
-        .from('teams')
-        .select('*')
-        .order('group_id')
-
-      // Get all users
       const { data: allUsers } = await supabase.from('profiles').select('id')
+      if (!allUsers || !realStandings) return
 
-      if (!allUsers || !realStandings || !allTeams) return
-
-      // Recalculate for each user
       for (const user of allUsers) {
         const { data: userPreds } = await supabase
           .from('predictions')
@@ -2203,14 +2255,12 @@ function GroupStandingsTab() {
 
         const specialPoints = specialPreds?.reduce((sum, p) => sum + (p.points_earned || 0), 0) || 0
 
-        // Calculate group order bonus based on manual position predictions
         let groupOrderBonus = 0
         const { data: userPositionPredictions } = await supabase
           .from('group_position_predictions')
           .select('*')
           .eq('user_id', user.id)
 
-        // Get all group matches to verify completion
         const { data: groupMatches } = await supabase
           .from('matches')
           .select('group_id, home_score, away_score')
@@ -2226,10 +2276,8 @@ function GroupStandingsTab() {
             (pp: any) => pp.group_id === groupId
           ) || []
 
-          // Count completed matches in this group
           const completedMatchesInGroup = groupMatches?.filter((m: any) => m.group_id === groupId).length || 0
 
-          // Award bonus only if all 6 matches are complete and all 4 positions match exactly
           if (completedMatchesInGroup === 6 && groupRealStandings.length >= 4 && groupPositionPreds.length >= 4) {
             let allMatch = true
 
@@ -2261,166 +2309,82 @@ function GroupStandingsTab() {
     }
   }
 
-  async function clearGroupStanding(groupId: string, position: number) {
-    if (!confirm(`¿Estás seguro de que quieres borrar la posición ${position}° del Grupo ${groupId}?`)) {
-      return
-    }
-
-    setSaving(true)
-
-    try {
-      const { error } = await supabase
-        .from('group_standings')
-        .delete()
-        .eq('group_id', groupId)
-        .eq('position', position)
-
-      if (error) {
-        console.error('Supabase error:', error)
-        throw error
-      }
-
-      // Recargar datos
-      await loadData()
-
-      // Recalcular bonos
-      await recalculateGroupOrderBonuses()
-    } catch (error) {
-      console.error('Error al borrar:', error)
-      alert('Error al borrar: ' + JSON.stringify(error))
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  async function clearEntireGroup(groupId: string) {
-    if (!confirm(`¿Estás seguro de que quieres borrar TODAS las posiciones del Grupo ${groupId}?`)) {
-      return
-    }
-
-    setSaving(true)
-
-    try {
-      const { error } = await supabase
-        .from('group_standings')
-        .delete()
-        .eq('group_id', groupId)
-
-      if (error) {
-        console.error('Supabase error:', error)
-        throw error
-      }
-
-      // Recargar datos
-      await loadData()
-
-      // Recalcular bonos
-      await recalculateGroupOrderBonuses()
-    } catch (error) {
-      console.error('Error al borrar:', error)
-      alert('Error al borrar: ' + JSON.stringify(error))
-    } finally {
-      setSaving(false)
-    }
-  }
-
   const groupedStandings = GROUPS.reduce((acc, groupId) => {
     acc[groupId] = standings.filter(s => s.group_id === groupId)
-    return acc
-  }, {} as Record<string, any[]>)
-
-  const groupTeams = GROUPS.reduce((acc, groupId) => {
-    acc[groupId] = teams.filter(t => t.group_id === groupId)
     return acc
   }, {} as Record<string, any[]>)
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-slate-800">Orden Real de Grupos</h2>
+        <h2 className="text-2xl font-bold text-slate-800">Tablas de Grupos (Auto-calculadas)</h2>
         <p className="text-slate-600 mt-1">
-          Define el orden final real de cada grupo para calcular el bono por orden exacto completo (+3 pts)
+          Las tablas se calculan automáticamente basándose en los resultados reales ingresados en Admin/Partidos.
+          Solo puedes marcar qué equipos clasifican.
         </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {GROUPS.map(groupId => {
-          const groupStandings = groupedStandings[groupId] || []
-          const groupTeamsList = groupTeams[groupId] || []
+          const calculatedStandings = calculateGroupStandings(groupId)
+          const savedStandings = groupedStandings[groupId] || []
 
           return (
             <div key={groupId} className="bg-white rounded-xl border border-red-100 p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-bold text-red-600">Grupo {groupId}</h3>
-                {groupStandings.length > 0 && (
-                  <button
-                    onClick={() => clearEntireGroup(groupId)}
-                    disabled={saving}
-                    className="text-xs text-red-600 hover:text-red-800 underline disabled:opacity-50"
-                  >
-                    Limpiar grupo
-                  </button>
-                )}
+                <button
+                  onClick={() => updateGroupStandings(groupId)}
+                  disabled={saving || calculatedStandings.length === 0}
+                  className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded disabled:opacity-50"
+                >
+                  Actualizar Tabla
+                </button>
               </div>
 
-              <div className="space-y-2">
-                {[1, 2, 3, 4].map(position => {
-                  const standing = groupStandings.find(s => s.position === position)
-                  const key = `${groupId}-${position}`
-                  const justSaved = savedKey === key
+              {calculatedStandings.length === 0 ? (
+                <p className="text-sm text-slate-500 italic">No hay resultados para este grupo aún</p>
+              ) : (
+                <div className="space-y-1">
+                  <div className="grid grid-cols-12 gap-1 text-xs font-semibold text-slate-600 border-b pb-1">
+                    <div className="col-span-1">Pos</div>
+                    <div className="col-span-5">Equipo</div>
+                    <div className="col-span-1 text-center">PJ</div>
+                    <div className="col-span-1 text-center">DG</div>
+                    <div className="col-span-2 text-center">Pts</div>
+                    <div className="col-span-2 text-center">Q</div>
+                  </div>
 
-                  return (
-                    <div key={position} className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-slate-600 w-6">{position}°</span>
-                      <select
-                        value={standing?.team_id || ''}
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            const qualified = position <= 2 || (position === 3 && groupStandings.filter(s => s.qualified).length < 3)
-                            saveGroupStanding(groupId, position, parseInt(e.target.value), qualified)
-                          }
-                        }}
-                        disabled={saving}
-                        className={`flex-1 px-3 py-2 border rounded-lg text-sm transition-colors disabled:opacity-50 ${
-                          justSaved ? 'border-green-500 bg-green-50' : 'border-slate-300'
-                        }`}
-                      >
-                        <option value="">Seleccionar equipo...</option>
-                        {groupTeamsList.map((team: { id: number; name: string; flag_emoji: string }) => (
-                          <option key={team.id} value={team.id}>
-                            {team.flag_emoji} {team.name}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        type="checkbox"
-                        checked={standing?.qualified || false}
-                        onChange={(e) => {
-                          if (standing) {
-                            saveGroupStanding(groupId, position, standing.team_id, e.target.checked)
-                          }
-                        }}
-                        disabled={!standing || saving}
-                        className="w-5 h-5"
-                        title="Clasificó"
-                      />
-                      {standing ? (
-                        <button
-                          onClick={() => clearGroupStanding(groupId, position)}
-                          disabled={saving}
-                          className="text-red-600 hover:text-red-800 font-bold text-lg disabled:opacity-50"
-                          title="Borrar esta posición"
-                        >
-                          ×
-                        </button>
-                      ) : justSaved ? (
-                        <span className="text-green-600 font-bold w-6">✓</span>
-                      ) : (
-                        <span className="text-xs text-slate-400 w-6"></span>
-                      )}
-                    </div>
-                  )
-                })}
+                  {calculatedStandings.map((standing, idx) => {
+                    const savedStanding = savedStandings.find(s => s.team_id === standing.team.id)
+                    const isQualified = savedStanding?.qualified || false
+
+                    return (
+                      <div key={standing.team.id} className="grid grid-cols-12 gap-1 text-sm items-center py-1">
+                        <div className="col-span-1 font-semibold text-slate-600">{idx + 1}°</div>
+                        <div className="col-span-5 truncate">{standing.team.flag_emoji} {standing.team.name}</div>
+                        <div className="col-span-1 text-center text-slate-600">{standing.played}</div>
+                        <div className="col-span-1 text-center text-slate-600">{standing.gd > 0 ? `+${standing.gd}` : standing.gd}</div>
+                        <div className="col-span-2 text-center font-bold">{standing.points}</div>
+                        <div className="col-span-2 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isQualified}
+                            onChange={() => toggleQualified(groupId, standing.team.id, isQualified)}
+                            disabled={saving || !savedStanding}
+                            className="w-4 h-4"
+                            title="Clasificó a octavos"
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              <div className="mt-2 text-xs text-slate-500">
+                <p>• Haz clic en "Actualizar Tabla" para guardar las posiciones actuales</p>
+                <p>• Marca la casilla "Q" para indicar qué equipos clasifican</p>
               </div>
             </div>
           )
