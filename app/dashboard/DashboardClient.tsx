@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 
@@ -59,6 +60,8 @@ type SpecialPrediction = {
 
 export default function DashboardClient({ user, profile }: { user: User, profile: Profile | null }) {
   const [activeTab, setActiveTab] = useState('predictions')
+  const router = useRouter()
+  const supabase = createClient()
 
   const tabs = [
     { id: 'predictions', label: 'Predicciones', icon: '⚽' },
@@ -68,6 +71,12 @@ export default function DashboardClient({ user, profile }: { user: User, profile
     { id: 'ranking', label: 'Ranking', icon: '📊' },
     { id: 'special', label: 'Especiales', icon: '⭐' },
   ]
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
+    router.refresh()
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-white">
@@ -103,14 +112,12 @@ export default function DashboardClient({ user, profile }: { user: User, profile
                   🛡️ Panel Admin
                 </a>
               )}
-              <form action="/auth/signout" method="post">
-                <button
-                  type="submit"
-                  className="bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
-                >
-                  Salir
-                </button>
-              </form>
+              <button
+                onClick={handleSignOut}
+                className="bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
+              >
+                Salir
+              </button>
             </div>
           </div>
         </div>
