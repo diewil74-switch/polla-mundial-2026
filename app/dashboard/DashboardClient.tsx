@@ -1366,7 +1366,10 @@ function BracketMatchCard({
 
   const hasResult = match.home_score !== null && match.away_score !== null
   const matchDate = new Date(match.match_date)
-  const hasStarted = new Date() >= matchDate
+
+  // Block predictions 15 minutes before match starts
+  const fifteenMinutesBeforeMatch = new Date(matchDate.getTime() - 15 * 60 * 1000)
+  const isPredictionLocked = new Date() >= fifteenMinutesBeforeMatch
 
   const homeTeamName = match.home_team?.name || match.home_team_label
   const awayTeamName = match.away_team?.name || match.away_team_label
@@ -1381,8 +1384,8 @@ function BracketMatchCard({
   // Check if teams are assigned
   const teamsAssigned = match.home_team_id && match.away_team_id
 
-  // Show prediction mode if enabled, match hasn't started, and teams are assigned
-  const canPredict = showPredictionMode && !hasStarted && teamsAssigned
+  // Show prediction mode if enabled, match isn't locked, and teams are assigned
+  const canPredict = showPredictionMode && !isPredictionLocked && teamsAssigned
 
   // Determine if prediction is correct (for visual feedback)
   let predictionCorrect = false
@@ -1406,9 +1409,37 @@ function BracketMatchCard({
           <p className="text-xs text-slate-500">Equipos por definir</p>
           <p className="text-xs text-slate-400 mt-1">Esperando resultados anteriores</p>
         </div>
+      ) : showPredictionMode && isPredictionLocked && teamsAssigned ? (
+        // Prediction locked (less than 15 minutes before match)
+        <div className="py-4 text-center">
+          <p className="text-xs text-amber-600 font-semibold">🔒 Predicciones cerradas</p>
+          <p className="text-xs text-slate-500 mt-1">
+            {matchDate.toLocaleDateString('es-CO', {
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </p>
+          {prediction && (
+            <p className="text-xs text-slate-600 mt-2">
+              Tu predicción: <span className="font-semibold">{prediction.pred_home} - {prediction.pred_away}</span>
+            </p>
+          )}
+        </div>
       ) : canPredict ? (
         // Prediction Mode - Score Input
         <div className="space-y-2">
+          {/* Match Date */}
+          <p className="text-xs text-slate-500 text-center mb-2">
+            {matchDate.toLocaleDateString('es-CO', {
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </p>
+
           {/* Home Team */}
           <div className="flex items-center gap-2">
             {homeFlag && <span className="text-lg">{homeFlag}</span>}
@@ -1454,6 +1485,16 @@ function BracketMatchCard({
       ) : (
         // Result/View Mode
         <>
+          {/* Match Date */}
+          <p className="text-xs text-slate-500 text-center mb-2">
+            {matchDate.toLocaleDateString('es-CO', {
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </p>
+
           {/* Home Team */}
           <div className={`flex items-center justify-between mb-2 ${homeIsWinner ? 'font-bold' : ''}`}>
             <div className="flex items-center gap-1 flex-1 min-w-0">
