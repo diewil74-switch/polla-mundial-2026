@@ -648,21 +648,38 @@ function GroupsTab({ userId }: { userId: string }) {
     setLoading(false)
   }
 
-  async function savePositionPrediction(groupId: string, teamId: number, position: number) {
-    const { error } = await supabase
-      .from('group_position_predictions')
-      .upsert({
-        user_id: userId,
-        group_id: groupId,
-        team_id: teamId,
-        predicted_position: position,
-        updated_at: new Date().toISOString(),
-      })
+  async function savePositionPrediction(groupId: string, teamId: number, position: number | null) {
+    if (position === null) {
+      // Delete the prediction if user selects "-"
+      const { error } = await supabase
+        .from('group_position_predictions')
+        .delete()
+        .eq('user_id', userId)
+        .eq('group_id', groupId)
+        .eq('team_id', teamId)
 
-    if (error) {
-      alert('Error al guardar: ' + error.message)
+      if (error) {
+        alert('Error al eliminar: ' + error.message)
+      } else {
+        await loadData()
+      }
     } else {
-      await loadData()
+      // Upsert the prediction
+      const { error } = await supabase
+        .from('group_position_predictions')
+        .upsert({
+          user_id: userId,
+          group_id: groupId,
+          team_id: teamId,
+          predicted_position: position,
+          updated_at: new Date().toISOString(),
+        })
+
+      if (error) {
+        alert('Error al guardar: ' + error.message)
+      } else {
+        await loadData()
+      }
     }
   }
 
@@ -708,7 +725,7 @@ function GroupTable({
   realStandings: any[]
   positionPredictions: any[]
   completedGroupMatches: any[]
-  onSavePosition: (groupId: string, teamId: number, position: number) => void
+  onSavePosition: (groupId: string, teamId: number, position: number | null) => void
 }) {
   const groupTeams = teams.filter((t) => t.group_id === group)
 
@@ -825,11 +842,19 @@ function GroupTable({
                       <select
                         value={s.predictedPosition || ''}
                         onChange={(e) => {
-                          const newPos = parseInt(e.target.value)
-                          if (newPos && !usedPositions.includes(newPos)) {
+                          const value = e.target.value
+
+                          // If user selects "-", clear the position
+                          if (value === '') {
+                            onSavePosition(group, s.team.id, null)
+                            return
+                          }
+
+                          const newPos = parseInt(value)
+                          if (!usedPositions.includes(newPos)) {
                             onSavePosition(group, s.team.id, newPos)
-                          } else if (newPos && usedPositions.includes(newPos)) {
-                            alert('Esa posición ya está asignada a otro equipo en este grupo')
+                          } else {
+                            alert('Esa posición ya está asignada a otro equipo en este grupo. Primero debes limpiar la posición del otro equipo seleccionando "-".')
                           }
                         }}
                         className="w-12 px-1 py-1 border border-slate-300 rounded text-center text-sm font-semibold"
