@@ -74,7 +74,7 @@ export default function RegisterPage() {
         email,
         password,
         options: {
-          emailRedirectTo: 'https://polla-mundial-2026-seven.vercel.app/auth/confirm',
+          emailRedirectTo: 'https://polla-mundial-2026-seven.vercel.app/auth/callback',
         },
       })
 

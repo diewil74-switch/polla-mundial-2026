@@ -18,7 +18,7 @@ export default function ForgotPasswordPage() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://polla-mundial-2026-seven.vercel.app/reset-password',
+        redirectTo: 'https://polla-mundial-2026-seven.vercel.app/auth/callback?next=/reset-password',
       })
 
       if (error) {
