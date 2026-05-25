@@ -1290,48 +1290,43 @@ function BracketTab() {
             </div>
           </div>
 
-          {/* Third Place & Final */}
+          {/* Third Place */}
           <div className="flex-shrink-0" style={{ width: '220px' }}>
-            <div className="space-y-8">
-              {/* Third Place Match */}
-              <div>
-                <h3 className="text-sm font-bold text-slate-700 mb-4 text-center">Tercer Puesto</h3>
-                <div style={{ paddingTop: '60px' }}>
-                  {thirdPlaceMatch && (
-                    <BracketMatchCard
-                      match={thirdPlaceMatch}
-                      borderColor="border-amber-600"
-                      prediction={predictions[thirdPlaceMatch.id]}
-                      showPredictionMode={showPredictions}
-                      onSavePrediction={savePrediction}
-                    />
-                  )}
-                </div>
-              </div>
+            <h3 className="text-sm font-bold text-slate-700 mb-4 text-center">Tercer Puesto</h3>
+            <div style={{ paddingTop: '360px' }}>
+              {thirdPlaceMatch && (
+                <BracketMatchCard
+                  match={thirdPlaceMatch}
+                  borderColor="border-amber-600"
+                  prediction={predictions[thirdPlaceMatch.id]}
+                  showPredictionMode={showPredictions}
+                  onSavePrediction={savePrediction}
+                />
+              )}
+            </div>
+          </div>
 
-              {/* Final */}
-              <div style={{ marginTop: '180px' }}>
-                <h3 className="text-sm font-bold text-slate-700 mb-4 text-center">Final</h3>
-                <div>
-                  {finalMatch && (
-                    <BracketMatchCard
-                      match={finalMatch}
-                      borderColor="border-slate-800"
-                      special
-                      prediction={predictions[finalMatch.id]}
-                      showPredictionMode={showPredictions}
-                      onSavePrediction={savePrediction}
-                    />
-                  )}
-                </div>
-              </div>
+          {/* Final */}
+          <div className="flex-shrink-0" style={{ width: '220px' }}>
+            <h3 className="text-sm font-bold text-slate-700 mb-4 text-center">Final</h3>
+            <div style={{ paddingTop: '360px' }}>
+              {finalMatch && (
+                <BracketMatchCard
+                  match={finalMatch}
+                  borderColor="border-slate-800"
+                  special
+                  prediction={predictions[finalMatch.id]}
+                  showPredictionMode={showPredictions}
+                  onSavePrediction={savePrediction}
+                />
+              )}
             </div>
           </div>
 
           {/* Champion */}
           <div className="flex-shrink-0" style={{ width: '180px' }}>
             <h3 className="text-sm font-bold text-slate-700 mb-4 text-center">Campeón</h3>
-            <div style={{ paddingTop: '400px' }}>
+            <div style={{ paddingTop: '360px' }}>
               {finalMatch && finalMatch.home_score !== null && finalMatch.away_score !== null && (
                 <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border-2 border-yellow-400 rounded-lg p-4 text-center shadow-lg">
                   <div className="text-4xl mb-2">🏆</div>
