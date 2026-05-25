@@ -361,20 +361,29 @@ function ResultsTab() {
 
               const groupRealStandings = realStandings.filter((s: any) => s.group_id === groupId)
 
-              if (groupRealStandings.length >= 2 && predictedStandings.length >= 2) {
+              // Award bonus if all 4 positions match exactly
+              if (groupRealStandings.length >= 4 && predictedStandings.length >= 4) {
                 const realFirst = groupRealStandings.find((s: any) => s.position === 1)
                 const realSecond = groupRealStandings.find((s: any) => s.position === 2)
+                const realThird = groupRealStandings.find((s: any) => s.position === 3)
+                const realFourth = groupRealStandings.find((s: any) => s.position === 4)
 
                 const predFirst = predictedStandings[0]?.teamId
                 const predSecond = predictedStandings[1]?.teamId
+                const predThird = predictedStandings[2]?.teamId
+                const predFourth = predictedStandings[3]?.teamId
 
                 if (
                   realFirst &&
                   realSecond &&
+                  realThird &&
+                  realFourth &&
                   predFirst === realFirst.team_id &&
-                  predSecond === realSecond.team_id
+                  predSecond === realSecond.team_id &&
+                  predThird === realThird.team_id &&
+                  predFourth === realFourth.team_id
                 ) {
-                  groupOrderBonus += 5
+                  groupOrderBonus += 3
                 }
               }
             })
@@ -540,20 +549,29 @@ function ResultsTab() {
 
               const groupRealStandings = realStandings.filter((s: any) => s.group_id === groupId)
 
-              if (groupRealStandings.length >= 2 && predictedStandings.length >= 2) {
+              // Award bonus if all 4 positions match exactly
+              if (groupRealStandings.length >= 4 && predictedStandings.length >= 4) {
                 const realFirst = groupRealStandings.find((s: any) => s.position === 1)
                 const realSecond = groupRealStandings.find((s: any) => s.position === 2)
+                const realThird = groupRealStandings.find((s: any) => s.position === 3)
+                const realFourth = groupRealStandings.find((s: any) => s.position === 4)
 
                 const predFirst = predictedStandings[0]?.teamId
                 const predSecond = predictedStandings[1]?.teamId
+                const predThird = predictedStandings[2]?.teamId
+                const predFourth = predictedStandings[3]?.teamId
 
                 if (
                   realFirst &&
                   realSecond &&
+                  realThird &&
+                  realFourth &&
                   predFirst === realFirst.team_id &&
-                  predSecond === realSecond.team_id
+                  predSecond === realSecond.team_id &&
+                  predThird === realThird.team_id &&
+                  predFourth === realFourth.team_id
                 ) {
-                  groupOrderBonus += 5
+                  groupOrderBonus += 3
                 }
               }
             })
@@ -1566,23 +1584,29 @@ function RankingTab() {
         // Get real standings for this group
         const groupRealStandings = realStandings.filter((s: any) => s.group_id === groupId)
 
-        if (groupRealStandings.length >= 2 && predictedStandings.length >= 2) {
-          // Get 1st and 2nd place from real standings
+        // Award bonus if all 4 positions match exactly
+        if (groupRealStandings.length >= 4 && predictedStandings.length >= 4) {
           const realFirst = groupRealStandings.find((s: any) => s.position === 1)
           const realSecond = groupRealStandings.find((s: any) => s.position === 2)
+          const realThird = groupRealStandings.find((s: any) => s.position === 3)
+          const realFourth = groupRealStandings.find((s: any) => s.position === 4)
 
-          // Check if user's prediction matches
           const predFirst = predictedStandings[0]?.teamId
           const predSecond = predictedStandings[1]?.teamId
+          const predThird = predictedStandings[2]?.teamId
+          const predFourth = predictedStandings[3]?.teamId
 
-          // Award bonus if 1st and 2nd positions match exactly
           if (
             realFirst &&
             realSecond &&
+            realThird &&
+            realFourth &&
             predFirst === realFirst.team_id &&
-            predSecond === realSecond.team_id
+            predSecond === realSecond.team_id &&
+            predThird === realThird.team_id &&
+            predFourth === realFourth.team_id
           ) {
-            groupOrderBonus += 5
+            groupOrderBonus += 3
           }
         }
       })
@@ -1960,20 +1984,29 @@ function SpecialsTab() {
 
             const groupRealStandings = realStandings.filter((s: any) => s.group_id === groupId)
 
-            if (groupRealStandings.length >= 2 && predictedStandings.length >= 2) {
+            // Award bonus if all 4 positions match exactly
+            if (groupRealStandings.length >= 4 && predictedStandings.length >= 4) {
               const realFirst = groupRealStandings.find((s: any) => s.position === 1)
               const realSecond = groupRealStandings.find((s: any) => s.position === 2)
+              const realThird = groupRealStandings.find((s: any) => s.position === 3)
+              const realFourth = groupRealStandings.find((s: any) => s.position === 4)
 
               const predFirst = predictedStandings[0]?.teamId
               const predSecond = predictedStandings[1]?.teamId
+              const predThird = predictedStandings[2]?.teamId
+              const predFourth = predictedStandings[3]?.teamId
 
               if (
                 realFirst &&
                 realSecond &&
+                realThird &&
+                realFourth &&
                 predFirst === realFirst.team_id &&
-                predSecond === realSecond.team_id
+                predSecond === realSecond.team_id &&
+                predThird === realThird.team_id &&
+                predFourth === realFourth.team_id
               ) {
-                groupOrderBonus += 5
+                groupOrderBonus += 3
               }
             }
           })
@@ -2338,20 +2371,29 @@ function GroupStandingsTab() {
 
           const groupRealStandings = realStandings.filter((s: any) => s.group_id === groupId)
 
-          if (groupRealStandings.length >= 2 && predictedStandings.length >= 2) {
+          // Award bonus if all 4 positions match exactly
+          if (groupRealStandings.length >= 4 && predictedStandings.length >= 4) {
             const realFirst = groupRealStandings.find((s: any) => s.position === 1)
             const realSecond = groupRealStandings.find((s: any) => s.position === 2)
+            const realThird = groupRealStandings.find((s: any) => s.position === 3)
+            const realFourth = groupRealStandings.find((s: any) => s.position === 4)
 
             const predFirst = predictedStandings[0]?.teamId
             const predSecond = predictedStandings[1]?.teamId
+            const predThird = predictedStandings[2]?.teamId
+            const predFourth = predictedStandings[3]?.teamId
 
             if (
               realFirst &&
               realSecond &&
+              realThird &&
+              realFourth &&
               predFirst === realFirst.team_id &&
-              predSecond === realSecond.team_id
+              predSecond === realSecond.team_id &&
+              predThird === realThird.team_id &&
+              predFourth === realFourth.team_id
             ) {
-              groupOrderBonus += 5
+              groupOrderBonus += 3
             }
           }
         })
@@ -2446,7 +2488,7 @@ function GroupStandingsTab() {
       <div>
         <h2 className="text-2xl font-bold text-slate-800">Orden Real de Grupos</h2>
         <p className="text-slate-600 mt-1">
-          Define el orden final real de cada grupo para calcular el bono por orden exacto (+5 pts)
+          Define el orden final real de cada grupo para calcular el bono por orden exacto completo (+3 pts)
         </p>
       </div>
 

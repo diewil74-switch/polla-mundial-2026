@@ -691,23 +691,31 @@ function GroupTable({ group, teams, predictions, realStandings }: { group: strin
     return b.gf - a.gf
   })
 
-  // Check if user earned group order bonus for this group
+  // Check if user earned group order bonus for this group (all 4 positions must match)
   const groupRealStandings = realStandings.filter((s: any) => s.group_id === group)
   let earnedBonus = false
 
-  if (groupRealStandings.length >= 2 && standings.length >= 2) {
+  if (groupRealStandings.length >= 4 && standings.length >= 4) {
     const realFirst = groupRealStandings.find((s: any) => s.position === 1)
     const realSecond = groupRealStandings.find((s: any) => s.position === 2)
+    const realThird = groupRealStandings.find((s: any) => s.position === 3)
+    const realFourth = groupRealStandings.find((s: any) => s.position === 4)
 
     const predFirst = standings[0]?.team.id
     const predSecond = standings[1]?.team.id
+    const predThird = standings[2]?.team.id
+    const predFourth = standings[3]?.team.id
 
-    // Award bonus if 1st and 2nd positions match exactly
+    // Award bonus if all 4 positions match exactly
     earnedBonus =
       realFirst &&
       realSecond &&
+      realThird &&
+      realFourth &&
       predFirst === realFirst.team_id &&
-      predSecond === realSecond.team_id
+      predSecond === realSecond.team_id &&
+      predThird === realThird.team_id &&
+      predFourth === realFourth.team_id
   }
 
   return (
@@ -717,7 +725,7 @@ function GroupTable({ group, teams, predictions, realStandings }: { group: strin
           <h3 className="font-bold">Grupo {group}</h3>
           {earnedBonus && (
             <span className="bg-yellow-400 text-slate-800 text-xs font-bold px-2 py-1 rounded-full">
-              +5 pts Bono Orden
+              +3 pts Bono Orden
             </span>
           )}
         </div>

@@ -52,12 +52,12 @@ export default function RulesPage() {
           <div className="bg-yellow-50 rounded-lg border border-yellow-200 p-6">
             <div className="flex items-center justify-between mb-3">
               <span className="text-slate-700 font-medium">
-                Acertar 1° Y 2° clasificado en posiciones exactas
+                Acertar el orden completo del grupo (posiciones 1°, 2°, 3° y 4°)
               </span>
-              <span className="font-bold text-yellow-700 text-2xl">+5 pts</span>
+              <span className="font-bold text-yellow-700 text-2xl">+3 pts</span>
             </div>
             <p className="text-sm text-slate-600 mb-2">
-              • Ambas posiciones deben estar correctas simultáneamente
+              • Las 4 posiciones deben estar correctas simultáneamente
             </p>
             <p className="text-sm text-slate-600">
               • Deadline: antes del primer partido del grupo
