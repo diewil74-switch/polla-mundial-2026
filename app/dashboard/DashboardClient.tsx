@@ -644,7 +644,23 @@ function GroupsTab({ userId }: { userId: string }) {
     if (predictionsRes.data) setPredictions(predictionsRes.data)
     if (standingsRes.data) setRealStandings(standingsRes.data)
     if (positionPredsRes.data) setPositionPredictions(positionPredsRes.data)
-    if (completedMatchesRes.data) setCompletedGroupMatches(completedMatchesRes.data)
+    if (completedMatchesRes.data) {
+      setCompletedGroupMatches(completedMatchesRes.data)
+      console.log('=== PARTIDOS COMPLETOS CARGADOS ===')
+      console.log('Total partidos con scores:', completedMatchesRes.data.length)
+      console.log('Partidos del grupo A:', completedMatchesRes.data.filter((m: any) => m.group_id === 'A'))
+
+      // DEBUG: Ver TODOS los partidos del grupo A (con y sin scores)
+      const { data: allGroupAMatches } = await supabase
+        .from('matches')
+        .select('id, match_number, group_id, phase, home_score, away_score, home_team_id, away_team_id')
+        .eq('phase', 'groups')
+        .eq('group_id', 'A')
+
+      console.log('=== TODOS LOS PARTIDOS DEL GRUPO A ===')
+      console.log('Total partidos:', allGroupAMatches?.length)
+      console.log('Detalle:', allGroupAMatches)
+    }
     setLoading(false)
   }
 
