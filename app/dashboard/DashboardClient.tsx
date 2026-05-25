@@ -1111,7 +1111,7 @@ function RankingTab({ currentUserId }: { currentUserId: string }) {
             // DEBUG for group A
             if (groupId === 'A') {
               console.log('=== DEBUG RANKING - GRUPO A ===')
-              console.log('User:', profile.name)
+              console.log('User:', profile.display_name)
               console.log('Partidos completos:', completedMatchesInGroup)
               console.log('Group real standings:', groupRealStandings)
               console.log('Position predictions:', groupPositionPreds)
@@ -1162,7 +1162,7 @@ function RankingTab({ currentUserId }: { currentUserId: string }) {
         const topScorer = specialPreds?.find(sp => sp.type === 'top_scorer')?.points_earned || 0
 
         // DEBUG: Log final groupOrderBonus
-        console.log(`Total groupOrderBonus para ${profile.name}:`, groupOrderBonus)
+        console.log(`Total groupOrderBonus para ${profile.display_name}:`, groupOrderBonus)
 
         // Calculate total points by summing all categories
         const totalCalculated =
