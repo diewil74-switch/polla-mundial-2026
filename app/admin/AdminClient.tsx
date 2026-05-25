@@ -2125,11 +2125,30 @@ function GroupStandingsTab() {
     const groupTeams = teams.filter(t => t.group_id === groupId)
     const groupMatches = matches.filter(m => m.group_id === groupId)
 
+    // Debug logging for Group A
+    if (groupId === 'A') {
+      console.log('=== DEBUG GRUPO A - ADMIN ===')
+      console.log('Teams en grupo A:', groupTeams.length, groupTeams.map(t => ({ id: t.id, name: t.name })))
+      console.log('Matches en grupo A:', groupMatches.length)
+      console.log('Matches con scores:', groupMatches.map(m => ({
+        id: m.id,
+        home_team_id: m.home_team_id,
+        away_team_id: m.away_team_id,
+        home_score: m.home_score,
+        away_score: m.away_score,
+        group_id: m.group_id
+      })))
+    }
+
     const standings = groupTeams.map(team => {
       const teamMatches = groupMatches.filter(
         m => (m.home_team_id === team.id || m.away_team_id === team.id) &&
              m.home_score !== null && m.away_score !== null
       )
+
+      if (groupId === 'A') {
+        console.log(`Team ${team.name} (ID: ${team.id}): ${teamMatches.length} partidos con scores`)
+      }
 
       let won = 0, drawn = 0, lost = 0, gf = 0, gc = 0
 
@@ -2150,6 +2169,10 @@ function GroupStandingsTab() {
       const gd = gf - gc
       const played = teamMatches.length
 
+      if (groupId === 'A') {
+        console.log(`${team.name}: PJ=${played}, G=${won}, E=${drawn}, P=${lost}, GF=${gf}, GC=${gc}, DG=${gd}, Pts=${points}`)
+      }
+
       return { team, played, won, drawn, lost, gf, gc, gd, points }
     })
 
@@ -2159,6 +2182,10 @@ function GroupStandingsTab() {
       if (a.gd !== b.gd) return b.gd - a.gd
       return b.gf - a.gf
     })
+
+    if (groupId === 'A') {
+      console.log('Standings ordenados:', standings.map(s => ({ name: s.team.name, points: s.points, gd: s.gd })))
+    }
 
     return standings
   }
