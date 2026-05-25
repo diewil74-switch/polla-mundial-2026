@@ -94,7 +94,13 @@ export default function DashboardClient({ user, profile }: { user: User, profile
             <div className="flex items-center gap-4">
               <div className="text-center">
                 <p className="text-2xl font-bold text-red-600">{profile?.total_points || 0}</p>
-                <p className="text-xs text-slate-600">Puntos</p>
+                <p className="text-xs text-slate-600">Puntos (BD)</p>
+                {(() => {
+                  console.log('=== PUNTOS EN HEADER ===')
+                  console.log('Puntos del perfil (de la BD):', profile?.total_points)
+                  console.log('Usuario:', profile?.display_name)
+                  return null
+                })()}
               </div>
               <a
                 href="/rules"
@@ -199,7 +205,11 @@ function PredictionsTab({ userId }: { userId: string }) {
   }
 
   async function savePrediction(matchId: number, predHome: number, predAway: number) {
-    const { error } = await supabase
+    console.log('=== GUARDANDO PREDICCION ===')
+    console.log('Match ID:', matchId)
+    console.log('Predicción:', predHome, '-', predAway)
+
+    const { data, error } = await supabase
       .from('predictions')
       .upsert({
         user_id: userId,
@@ -207,8 +217,13 @@ function PredictionsTab({ userId }: { userId: string }) {
         pred_home: predHome,
         pred_away: predAway,
       })
+      .select()
 
-    if (!error) {
+    if (error) {
+      console.error('❌ Error al guardar predicción:', error)
+      alert('Error al guardar predicción: ' + error.message)
+    } else {
+      console.log('✅ Predicción guardada exitosamente:', data)
       await loadData()
     }
   }
@@ -641,7 +656,22 @@ function GroupsTab({ userId }: { userId: string }) {
     ])
 
     if (teamsRes.data) setTeams(teamsRes.data)
-    if (predictionsRes.data) setPredictions(predictionsRes.data)
+    if (predictionsRes.data) {
+      setPredictions(predictionsRes.data)
+      console.log('=== PREDICCIONES CARGADAS (TAB GRUPOS) ===')
+      console.log('Total predicciones:', predictionsRes.data.length)
+      console.log('Predicciones del grupo A:', predictionsRes.data.filter((p: any) => p.match?.group_id === 'A'))
+      console.log('Detalle predicciones grupo A:', predictionsRes.data
+        .filter((p: any) => p.match?.group_id === 'A')
+        .map((p: any) => ({
+          match_id: p.match_id,
+          pred_home: p.pred_home,
+          pred_away: p.pred_away,
+          home_team_id: p.match.home_team_id,
+          away_team_id: p.match.away_team_id
+        }))
+      )
+    }
     if (standingsRes.data) setRealStandings(standingsRes.data)
     if (positionPredsRes.data) setPositionPredictions(positionPredsRes.data)
     if (completedMatchesRes.data) {
@@ -1193,6 +1223,23 @@ function RankingTab({ currentUserId }: { currentUserId: string }) {
           thirdPlace +
           mvp +
           topScorer
+
+        console.log(`=== COMPARACIÓN PUNTOS: ${profile.display_name} ===`)
+        console.log('Puntos en BD:', profile.total_points)
+        console.log('Puntos calculados:', totalCalculated)
+        console.log('Desglose:', {
+          exactScore,
+          correctResult,
+          correctGoal,
+          correctQualifier,
+          uniquePredictions,
+          groupOrderBonus,
+          champion,
+          runnerUp,
+          thirdPlace,
+          mvp,
+          topScorer
+        })
 
         return {
           ...profile,
