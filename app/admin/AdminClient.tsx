@@ -301,88 +301,48 @@ function ResultsTab() {
 
           const specialPoints = specialPreds?.reduce((sum, p) => sum + (p.points_earned || 0), 0) || 0
 
-          // Calculate group order bonus
+          // Calculate group order bonus based on manual position predictions
           let groupOrderBonus = 0
-          if (realStandings && realStandings.length > 0 && allTeams) {
-            const { data: userGroupPredictions } = await supabase
-              .from('predictions')
-              .select(`
-                *,
-                match:matches!inner(
-                  id,
-                  phase,
-                  group_id,
-                  home_team_id,
-                  away_team_id
-                )
-              `)
+          if (realStandings && realStandings.length > 0) {
+            const { data: userPositionPredictions } = await supabase
+              .from('group_position_predictions')
+              .select('*')
               .eq('user_id', userId)
-              .eq('match.phase', 'groups')
+
+            // Get all group matches to verify completion
+            const { data: groupMatches } = await supabase
+              .from('matches')
+              .select('group_id, home_score, away_score')
+              .eq('phase', 'groups')
+              .not('home_score', 'is', null)
+              .not('away_score', 'is', null)
 
             const groups = 'ABCDEFGHIJKL'.split('')
 
             groups.forEach((groupId) => {
-              const groupTeams = allTeams.filter((t: any) => t.group_id === groupId)
-              const groupPredictions = userGroupPredictions?.filter(
-                (p: any) => p.match?.group_id === groupId
+              const groupRealStandings = realStandings.filter((s: any) => s.group_id === groupId)
+              const groupPositionPreds = userPositionPredictions?.filter(
+                (pp: any) => pp.group_id === groupId
               ) || []
 
-              const predictedStandings = groupTeams.map((team: any) => {
-                const teamPreds = groupPredictions.filter(
-                  (p: any) => p.match.home_team_id === team.id || p.match.away_team_id === team.id
-                )
+              // Count completed matches in this group
+              const completedMatchesInGroup = groupMatches?.filter((m: any) => m.group_id === groupId).length || 0
 
-                let won = 0, drawn = 0, lost = 0, gf = 0, gc = 0
+              // Award bonus only if all 6 matches are complete and all 4 positions match exactly
+              if (completedMatchesInGroup === 6 && groupRealStandings.length >= 4 && groupPositionPreds.length >= 4) {
+                let allMatch = true
 
-                teamPreds.forEach((p: any) => {
-                  const isHome = p.match.home_team_id === team.id
-                  const teamScore = isHome ? p.pred_home : p.pred_away
-                  const oppScore = isHome ? p.pred_away : p.pred_home
+                for (let position = 1; position <= 4; position++) {
+                  const realStanding = groupRealStandings.find((s: any) => s.position === position)
+                  const posPred = groupPositionPreds.find((pp: any) => pp.predicted_position === position)
 
-                  gf += teamScore
-                  gc += oppScore
+                  if (!realStanding || !posPred || realStanding.team_id !== posPred.team_id) {
+                    allMatch = false
+                    break
+                  }
+                }
 
-                  if (teamScore > oppScore) won++
-                  else if (teamScore === oppScore) drawn++
-                  else lost++
-                })
-
-                const points = won * 3 + drawn
-                const gd = gf - gc
-
-                return { teamId: team.id, points, gd, gf }
-              })
-
-              predictedStandings.sort((a, b) => {
-                if (a.points !== b.points) return b.points - a.points
-                if (a.gd !== b.gd) return b.gd - a.gd
-                return b.gf - a.gf
-              })
-
-              const groupRealStandings = realStandings.filter((s: any) => s.group_id === groupId)
-
-              // Award bonus if all 4 positions match exactly
-              if (groupRealStandings.length >= 4 && predictedStandings.length >= 4) {
-                const realFirst = groupRealStandings.find((s: any) => s.position === 1)
-                const realSecond = groupRealStandings.find((s: any) => s.position === 2)
-                const realThird = groupRealStandings.find((s: any) => s.position === 3)
-                const realFourth = groupRealStandings.find((s: any) => s.position === 4)
-
-                const predFirst = predictedStandings[0]?.teamId
-                const predSecond = predictedStandings[1]?.teamId
-                const predThird = predictedStandings[2]?.teamId
-                const predFourth = predictedStandings[3]?.teamId
-
-                if (
-                  realFirst &&
-                  realSecond &&
-                  realThird &&
-                  realFourth &&
-                  predFirst === realFirst.team_id &&
-                  predSecond === realSecond.team_id &&
-                  predThird === realThird.team_id &&
-                  predFourth === realFourth.team_id
-                ) {
+                if (allMatch) {
                   groupOrderBonus += 3
                 }
               }
@@ -489,88 +449,48 @@ function ResultsTab() {
 
           const specialPoints = specialPreds?.reduce((sum, p) => sum + (p.points_earned || 0), 0) || 0
 
-          // Calculate group order bonus
+          // Calculate group order bonus based on manual position predictions
           let groupOrderBonus = 0
-          if (realStandings && realStandings.length > 0 && allTeams) {
-            const { data: userGroupPredictions } = await supabase
-              .from('predictions')
-              .select(`
-                *,
-                match:matches!inner(
-                  id,
-                  phase,
-                  group_id,
-                  home_team_id,
-                  away_team_id
-                )
-              `)
+          if (realStandings && realStandings.length > 0) {
+            const { data: userPositionPredictions } = await supabase
+              .from('group_position_predictions')
+              .select('*')
               .eq('user_id', user.id)
-              .eq('match.phase', 'groups')
+
+            // Get all group matches to verify completion
+            const { data: groupMatches } = await supabase
+              .from('matches')
+              .select('group_id, home_score, away_score')
+              .eq('phase', 'groups')
+              .not('home_score', 'is', null)
+              .not('away_score', 'is', null)
 
             const groups = 'ABCDEFGHIJKL'.split('')
 
             groups.forEach((groupId) => {
-              const groupTeams = allTeams.filter((t: any) => t.group_id === groupId)
-              const groupPredictions = userGroupPredictions?.filter(
-                (p: any) => p.match?.group_id === groupId
+              const groupRealStandings = realStandings.filter((s: any) => s.group_id === groupId)
+              const groupPositionPreds = userPositionPredictions?.filter(
+                (pp: any) => pp.group_id === groupId
               ) || []
 
-              const predictedStandings = groupTeams.map((team: any) => {
-                const teamPreds = groupPredictions.filter(
-                  (p: any) => p.match.home_team_id === team.id || p.match.away_team_id === team.id
-                )
+              // Count completed matches in this group
+              const completedMatchesInGroup = groupMatches?.filter((m: any) => m.group_id === groupId).length || 0
 
-                let won = 0, drawn = 0, lost = 0, gf = 0, gc = 0
+              // Award bonus only if all 6 matches are complete and all 4 positions match exactly
+              if (completedMatchesInGroup === 6 && groupRealStandings.length >= 4 && groupPositionPreds.length >= 4) {
+                let allMatch = true
 
-                teamPreds.forEach((p: any) => {
-                  const isHome = p.match.home_team_id === team.id
-                  const teamScore = isHome ? p.pred_home : p.pred_away
-                  const oppScore = isHome ? p.pred_away : p.pred_home
+                for (let position = 1; position <= 4; position++) {
+                  const realStanding = groupRealStandings.find((s: any) => s.position === position)
+                  const posPred = groupPositionPreds.find((pp: any) => pp.predicted_position === position)
 
-                  gf += teamScore
-                  gc += oppScore
+                  if (!realStanding || !posPred || realStanding.team_id !== posPred.team_id) {
+                    allMatch = false
+                    break
+                  }
+                }
 
-                  if (teamScore > oppScore) won++
-                  else if (teamScore === oppScore) drawn++
-                  else lost++
-                })
-
-                const points = won * 3 + drawn
-                const gd = gf - gc
-
-                return { teamId: team.id, points, gd, gf }
-              })
-
-              predictedStandings.sort((a, b) => {
-                if (a.points !== b.points) return b.points - a.points
-                if (a.gd !== b.gd) return b.gd - a.gd
-                return b.gf - a.gf
-              })
-
-              const groupRealStandings = realStandings.filter((s: any) => s.group_id === groupId)
-
-              // Award bonus if all 4 positions match exactly
-              if (groupRealStandings.length >= 4 && predictedStandings.length >= 4) {
-                const realFirst = groupRealStandings.find((s: any) => s.position === 1)
-                const realSecond = groupRealStandings.find((s: any) => s.position === 2)
-                const realThird = groupRealStandings.find((s: any) => s.position === 3)
-                const realFourth = groupRealStandings.find((s: any) => s.position === 4)
-
-                const predFirst = predictedStandings[0]?.teamId
-                const predSecond = predictedStandings[1]?.teamId
-                const predThird = predictedStandings[2]?.teamId
-                const predFourth = predictedStandings[3]?.teamId
-
-                if (
-                  realFirst &&
-                  realSecond &&
-                  realThird &&
-                  realFourth &&
-                  predFirst === realFirst.team_id &&
-                  predSecond === realSecond.team_id &&
-                  predThird === realThird.team_id &&
-                  predFourth === realFourth.team_id
-                ) {
+                if (allMatch) {
                   groupOrderBonus += 3
                 }
               }
@@ -1535,77 +1455,48 @@ function RankingTab() {
 
     const uniquePredictions = uniqueCount * 5
 
-    // Calculate group order bonus
+    // Calculate group order bonus based on manual position predictions
     let groupOrderBonus = 0
-    if (realStandings && realStandings.length > 0 && allTeams) {
+    if (realStandings && realStandings.length > 0) {
+      const { data: userPositionPredictions } = await supabase
+        .from('group_position_predictions')
+        .select('*')
+        .eq('user_id', userId)
+
+      // Get all group matches to verify completion
+      const { data: groupMatches } = await supabase
+        .from('matches')
+        .select('group_id, home_score, away_score')
+        .eq('phase', 'groups')
+        .not('home_score', 'is', null)
+        .not('away_score', 'is', null)
+
       const groups = 'ABCDEFGHIJKL'.split('')
 
       groups.forEach((groupId) => {
-        // Get user's predicted standings for this group
-        const groupTeams = allTeams.filter((t: any) => t.group_id === groupId)
-        const groupPredictions = userPredictions.filter(
-          (p: any) => p.match?.phase === 'groups' && p.match?.group_id === groupId
-        )
-
-        // Calculate predicted standings
-        const predictedStandings = groupTeams.map((team: any) => {
-          const teamPreds = groupPredictions.filter(
-            (p: any) => p.match.home_team_id === team.id || p.match.away_team_id === team.id
-          )
-
-          let won = 0, drawn = 0, lost = 0, gf = 0, gc = 0
-
-          teamPreds.forEach((p: any) => {
-            const isHome = p.match.home_team_id === team.id
-            const teamScore = isHome ? p.pred_home : p.pred_away
-            const oppScore = isHome ? p.pred_away : p.pred_home
-
-            gf += teamScore
-            gc += oppScore
-
-            if (teamScore > oppScore) won++
-            else if (teamScore === oppScore) drawn++
-            else lost++
-          })
-
-          const points = won * 3 + drawn
-          const gd = gf - gc
-
-          return { teamId: team.id, points, gd, gf }
-        })
-
-        // Sort by points, then goal difference, then goals for
-        predictedStandings.sort((a, b) => {
-          if (a.points !== b.points) return b.points - a.points
-          if (a.gd !== b.gd) return b.gd - a.gd
-          return b.gf - a.gf
-        })
-
-        // Get real standings for this group
         const groupRealStandings = realStandings.filter((s: any) => s.group_id === groupId)
+        const groupPositionPreds = userPositionPredictions?.filter(
+          (pp: any) => pp.group_id === groupId
+        ) || []
 
-        // Award bonus if all 4 positions match exactly
-        if (groupRealStandings.length >= 4 && predictedStandings.length >= 4) {
-          const realFirst = groupRealStandings.find((s: any) => s.position === 1)
-          const realSecond = groupRealStandings.find((s: any) => s.position === 2)
-          const realThird = groupRealStandings.find((s: any) => s.position === 3)
-          const realFourth = groupRealStandings.find((s: any) => s.position === 4)
+        // Count completed matches in this group
+        const completedMatchesInGroup = groupMatches?.filter((m: any) => m.group_id === groupId).length || 0
 
-          const predFirst = predictedStandings[0]?.teamId
-          const predSecond = predictedStandings[1]?.teamId
-          const predThird = predictedStandings[2]?.teamId
-          const predFourth = predictedStandings[3]?.teamId
+        // Award bonus only if all 6 matches are complete and all 4 positions match exactly
+        if (completedMatchesInGroup === 6 && groupRealStandings.length >= 4 && groupPositionPreds.length >= 4) {
+          let allMatch = true
 
-          if (
-            realFirst &&
-            realSecond &&
-            realThird &&
-            realFourth &&
-            predFirst === realFirst.team_id &&
-            predSecond === realSecond.team_id &&
-            predThird === realThird.team_id &&
-            predFourth === realFourth.team_id
-          ) {
+          for (let position = 1; position <= 4; position++) {
+            const realStanding = groupRealStandings.find((s: any) => s.position === position)
+            const posPred = groupPositionPreds.find((pp: any) => pp.predicted_position === position)
+
+            if (!realStanding || !posPred || realStanding.team_id !== posPred.team_id) {
+              allMatch = false
+              break
+            }
+          }
+
+          if (allMatch) {
             groupOrderBonus += 3
           }
         }
@@ -2312,87 +2203,47 @@ function GroupStandingsTab() {
 
         const specialPoints = specialPreds?.reduce((sum, p) => sum + (p.points_earned || 0), 0) || 0
 
-        // Calculate group order bonus
+        // Calculate group order bonus based on manual position predictions
         let groupOrderBonus = 0
-        const { data: userGroupPredictions } = await supabase
-          .from('predictions')
-          .select(`
-            *,
-            match:matches!inner(
-              id,
-              phase,
-              group_id,
-              home_team_id,
-              away_team_id
-            )
-          `)
+        const { data: userPositionPredictions } = await supabase
+          .from('group_position_predictions')
+          .select('*')
           .eq('user_id', user.id)
-          .eq('match.phase', 'groups')
+
+        // Get all group matches to verify completion
+        const { data: groupMatches } = await supabase
+          .from('matches')
+          .select('group_id, home_score, away_score')
+          .eq('phase', 'groups')
+          .not('home_score', 'is', null)
+          .not('away_score', 'is', null)
 
         const groups = 'ABCDEFGHIJKL'.split('')
 
         groups.forEach((groupId) => {
-          const groupTeams = allTeams.filter((t: any) => t.group_id === groupId)
-          const groupPredictions = userGroupPredictions?.filter(
-            (p: any) => p.match?.group_id === groupId
+          const groupRealStandings = realStandings.filter((s: any) => s.group_id === groupId)
+          const groupPositionPreds = userPositionPredictions?.filter(
+            (pp: any) => pp.group_id === groupId
           ) || []
 
-          const predictedStandings = groupTeams.map((team: any) => {
-            const teamPreds = groupPredictions.filter(
-              (p: any) => p.match.home_team_id === team.id || p.match.away_team_id === team.id
-            )
+          // Count completed matches in this group
+          const completedMatchesInGroup = groupMatches?.filter((m: any) => m.group_id === groupId).length || 0
 
-            let won = 0, drawn = 0, lost = 0, gf = 0, gc = 0
+          // Award bonus only if all 6 matches are complete and all 4 positions match exactly
+          if (completedMatchesInGroup === 6 && groupRealStandings.length >= 4 && groupPositionPreds.length >= 4) {
+            let allMatch = true
 
-            teamPreds.forEach((p: any) => {
-              const isHome = p.match.home_team_id === team.id
-              const teamScore = isHome ? p.pred_home : p.pred_away
-              const oppScore = isHome ? p.pred_away : p.pred_home
+            for (let position = 1; position <= 4; position++) {
+              const realStanding = groupRealStandings.find((s: any) => s.position === position)
+              const posPred = groupPositionPreds.find((pp: any) => pp.predicted_position === position)
 
-              gf += teamScore
-              gc += oppScore
+              if (!realStanding || !posPred || realStanding.team_id !== posPred.team_id) {
+                allMatch = false
+                break
+              }
+            }
 
-              if (teamScore > oppScore) won++
-              else if (teamScore === oppScore) drawn++
-              else lost++
-            })
-
-            const points = won * 3 + drawn
-            const gd = gf - gc
-
-            return { teamId: team.id, points, gd, gf }
-          })
-
-          predictedStandings.sort((a, b) => {
-            if (a.points !== b.points) return b.points - a.points
-            if (a.gd !== b.gd) return b.gd - a.gd
-            return b.gf - a.gf
-          })
-
-          const groupRealStandings = realStandings.filter((s: any) => s.group_id === groupId)
-
-          // Award bonus if all 4 positions match exactly
-          if (groupRealStandings.length >= 4 && predictedStandings.length >= 4) {
-            const realFirst = groupRealStandings.find((s: any) => s.position === 1)
-            const realSecond = groupRealStandings.find((s: any) => s.position === 2)
-            const realThird = groupRealStandings.find((s: any) => s.position === 3)
-            const realFourth = groupRealStandings.find((s: any) => s.position === 4)
-
-            const predFirst = predictedStandings[0]?.teamId
-            const predSecond = predictedStandings[1]?.teamId
-            const predThird = predictedStandings[2]?.teamId
-            const predFourth = predictedStandings[3]?.teamId
-
-            if (
-              realFirst &&
-              realSecond &&
-              realThird &&
-              realFourth &&
-              predFirst === realFirst.team_id &&
-              predSecond === realSecond.team_id &&
-              predThird === realThird.team_id &&
-              predFourth === realFourth.team_id
-            ) {
+            if (allMatch) {
               groupOrderBonus += 3
             }
           }

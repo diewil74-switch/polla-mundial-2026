@@ -47,21 +47,45 @@ export default function RulesPage() {
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-6 border border-red-100">
           <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center">
             <span className="mr-3">🎯</span>
-            Bono orden de grupo
+            Bono orden de grupo - Proyección de posiciones finales
           </h2>
-          <div className="bg-yellow-50 rounded-lg border border-yellow-200 p-6">
+          <div className="bg-yellow-50 rounded-lg border border-yellow-200 p-6 mb-4">
             <div className="flex items-center justify-between mb-3">
               <span className="text-slate-700 font-medium">
                 Acertar el orden completo del grupo (posiciones 1°, 2°, 3° y 4°)
               </span>
               <span className="font-bold text-yellow-700 text-2xl">+3 pts</span>
             </div>
-            <p className="text-sm text-slate-600 mb-2">
-              • Las 4 posiciones deben estar correctas simultáneamente
-            </p>
-            <p className="text-sm text-slate-600">
-              • Deadline: antes del primer partido del grupo
-            </p>
+          </div>
+
+          <div className="space-y-3 text-sm text-slate-700">
+            <p className="font-semibold text-slate-800">¿Cómo funciona?</p>
+            <ul className="space-y-2 ml-4">
+              <li className="flex items-start">
+                <span className="mr-2">1.</span>
+                <span>En Dashboard/Grupos, cada tabla muestra una columna "Pos" donde debes asignar manualmente un número (1, 2, 3 o 4) a cada equipo</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">2.</span>
+                <span>Este número indica la <strong>posición final proyectada</strong> que crees que tendrá el equipo al terminar la fase de grupos</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">3.</span>
+                <span>La tabla se ordena automáticamente según tus predicciones de partidos, pero la columna "Pos" muestra tu proyección manual</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">4.</span>
+                <span>Al finalizar la fase de grupos, si las 4 posiciones proyectadas coinciden con el orden real final, ganas 3 puntos</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">5.</span>
+                <span><strong>Deadline:</strong> 11 de junio 2026, 11:00 PM (hora Colombia) - después de esta fecha no se pueden modificar las proyecciones</span>
+              </li>
+            </ul>
+            <div className="bg-slate-100 rounded-lg p-3 mt-3">
+              <p className="font-semibold text-slate-800 mb-1">Ejemplo:</p>
+              <p className="text-xs">Si proyectas a México en posición 1, Argentina en 2, Polonia en 3 y Arabia en 4, y ese es el orden final real del grupo, ganas 3 puntos. Si aunque sea una posición es diferente, no ganas el bono.</p>
+            </div>
           </div>
         </div>
 
