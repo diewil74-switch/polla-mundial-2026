@@ -206,21 +206,29 @@ function PredictionsTab({ userId }: { userId: string }) {
 
   async function savePrediction(matchId: number, predHome: number, predAway: number) {
     console.log('=== GUARDANDO PREDICCION ===')
+    console.log('User ID:', userId)
     console.log('Match ID:', matchId)
     console.log('Predicción:', predHome, '-', predAway)
 
     const { data, error } = await supabase
       .from('predictions')
-      .upsert({
-        user_id: userId,
-        match_id: matchId,
-        pred_home: predHome,
-        pred_away: predAway,
-      })
+      .upsert(
+        {
+          user_id: userId,
+          match_id: matchId,
+          pred_home: predHome,
+          pred_away: predAway,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'user_id,match_id',
+        }
+      )
       .select()
 
     if (error) {
       console.error('❌ Error al guardar predicción:', error)
+      console.error('Error details:', JSON.stringify(error, null, 2))
       alert('Error al guardar predicción: ' + error.message)
     } else {
       console.log('✅ Predicción guardada exitosamente:', data)
@@ -1396,14 +1404,27 @@ function BracketTab() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    await supabase.from('predictions').upsert({
-      user_id: user.id,
-      match_id: matchId,
-      pred_home: predHome,
-      pred_away: predAway,
-    })
+    const { error } = await supabase
+      .from('predictions')
+      .upsert(
+        {
+          user_id: user.id,
+          match_id: matchId,
+          pred_home: predHome,
+          pred_away: predAway,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'user_id,match_id',
+        }
+      )
 
-    await loadData()
+    if (error) {
+      console.error('Error guardando predicción en Llaves:', error)
+      alert('Error al guardar predicción: ' + error.message)
+    } else {
+      await loadData()
+    }
   }
 
   if (loading) return <div className="text-center py-12">Cargando bracket...</div>
@@ -1862,14 +1883,28 @@ function SpecialTab({ userId }: { userId: string }) {
   }
 
   async function savePrediction(type: string, value: string, deadline: string) {
-    await supabase.from('special_predictions').upsert({
-      user_id: userId,
-      type,
-      value,
-      deadline,
-      locked: false,
-    })
-    await loadData()
+    const { error } = await supabase
+      .from('special_predictions')
+      .upsert(
+        {
+          user_id: userId,
+          type,
+          value,
+          deadline,
+          locked: false,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          ignoreDuplicates: false,
+        }
+      )
+
+    if (error) {
+      console.error('Error guardando predicción especial:', error)
+      alert('Error al guardar predicción: ' + error.message)
+    } else {
+      await loadData()
+    }
   }
 
   if (loading) return <div className="text-center py-12">Cargando...</div>
