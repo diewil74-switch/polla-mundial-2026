@@ -1297,6 +1297,7 @@ function UsersTab({ currentUserId }: { currentUserId: string }) {
 function RankingTab() {
   const [profiles, setProfiles] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [recalculating, setRecalculating] = useState(false)
   const [expandedUser, setExpandedUser] = useState<string | null>(null)
   const [userBreakdown, setUserBreakdown] = useState<any>(null)
   const supabase = createClient()
@@ -1313,6 +1314,112 @@ function RankingTab() {
 
     if (data) setProfiles(data)
     setLoading(false)
+  }
+
+  async function recalculateAllPoints() {
+    if (!confirm('¿Recalcular puntos de TODOS los usuarios? Esto puede tomar varios segundos.')) {
+      return
+    }
+
+    setRecalculating(true)
+    try {
+      console.log('🔄 Iniciando recálculo de puntos para todos los usuarios...')
+
+      const { data: realStandings } = await supabase
+        .from('group_standings')
+        .select('*')
+        .order('group_id')
+        .order('position')
+
+      const { data: allUsers } = await supabase.from('profiles').select('id, display_name')
+      if (!allUsers || !realStandings) {
+        alert('Error: No se pudieron cargar datos')
+        return
+      }
+
+      console.log(`📊 Recalculando puntos para ${allUsers.length} usuarios...`)
+
+      for (const user of allUsers) {
+        // Get match points
+        const { data: userPreds } = await supabase
+          .from('predictions')
+          .select('points_earned')
+          .eq('user_id', user.id)
+
+        const matchPoints = userPreds?.reduce((sum, p) => sum + (p.points_earned || 0), 0) || 0
+
+        // Get special predictions points
+        const { data: specialPreds } = await supabase
+          .from('special_predictions')
+          .select('points_earned')
+          .eq('user_id', user.id)
+
+        const specialPoints = specialPreds?.reduce((sum, p) => sum + (p.points_earned || 0), 0) || 0
+
+        // Calculate group order bonus
+        let groupOrderBonus = 0
+        const { data: userPositionPredictions } = await supabase
+          .from('group_position_predictions')
+          .select('*')
+          .eq('user_id', user.id)
+
+        const { data: groupMatches } = await supabase
+          .from('matches')
+          .select('group_id, home_score, away_score')
+          .eq('phase', 'groups')
+          .not('home_score', 'is', null)
+          .not('away_score', 'is', null)
+
+        const groups = 'ABCDEFGHIJKL'.split('')
+
+        groups.forEach((groupId) => {
+          const groupRealStandings = realStandings.filter((s: any) => s.group_id === groupId)
+          const groupPositionPreds = userPositionPredictions?.filter(
+            (pp: any) => pp.group_id === groupId
+          ) || []
+
+          const completedMatchesInGroup = groupMatches?.filter((m: any) => m.group_id === groupId).length || 0
+
+          if (completedMatchesInGroup === 6 && groupRealStandings.length >= 4 && groupPositionPreds.length >= 4) {
+            let allMatch = true
+
+            for (let position = 1; position <= 4; position++) {
+              const realStanding = groupRealStandings.find((s: any) => s.position === position)
+              const posPred = groupPositionPreds.find((pp: any) => pp.predicted_position === position)
+
+              if (!realStanding || !posPred || realStanding.team_id !== posPred.team_id) {
+                allMatch = false
+                break
+              }
+            }
+
+            if (allMatch) {
+              groupOrderBonus += 3
+            }
+          }
+        })
+
+        const totalPoints = matchPoints + specialPoints + groupOrderBonus
+
+        await supabase
+          .from('profiles')
+          .update({ total_points: totalPoints })
+          .eq('id', user.id)
+
+        console.log(`✅ ${user.display_name}: ${totalPoints} pts (partidos: ${matchPoints}, especiales: ${specialPoints}, grupos: ${groupOrderBonus})`)
+      }
+
+      console.log('✅ Recálculo completado!')
+      alert(`Puntos recalculados para ${allUsers.length} usuarios`)
+
+      // Reload ranking
+      await loadRanking()
+    } catch (error) {
+      console.error('❌ Error recalculando puntos:', error)
+      alert('Error al recalcular puntos: ' + JSON.stringify(error))
+    } finally {
+      setRecalculating(false)
+    }
   }
 
   async function toggleUserBreakdown(userId: string) {
@@ -1537,7 +1644,25 @@ function RankingTab() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-800">Ranking Global</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-slate-800">Ranking Global</h2>
+        <button
+          onClick={recalculateAllPoints}
+          disabled={recalculating}
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
+        >
+          {recalculating ? (
+            <>
+              <span className="animate-spin">🔄</span>
+              Recalculando...
+            </>
+          ) : (
+            <>
+              🔄 Recalcular Puntos
+            </>
+          )}
+        </button>
+      </div>
 
       <div className="bg-white rounded-xl border border-red-100 overflow-hidden">
         <table className="w-full">
