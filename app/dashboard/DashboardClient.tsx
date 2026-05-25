@@ -60,6 +60,7 @@ type SpecialPrediction = {
 
 export default function DashboardClient({ user, profile }: { user: User, profile: Profile | null }) {
   const [activeTab, setActiveTab] = useState('predictions')
+  const [currentProfile, setCurrentProfile] = useState(profile)
   const router = useRouter()
   const supabase = createClient()
 
@@ -78,6 +79,19 @@ export default function DashboardClient({ user, profile }: { user: User, profile
     router.refresh()
   }
 
+  const refreshProfile = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+
+    if (data) {
+      setCurrentProfile(data as Profile)
+      console.log('🔄 Profile actualizado:', data.total_points, 'pts')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-white">
       {/* Header */}
@@ -89,18 +103,21 @@ export default function DashboardClient({ user, profile }: { user: User, profile
                 <span className="mr-2">⚽</span>
                 Polla Mundial 2026
               </h1>
-              <p className="text-sm text-slate-600 mt-1">Bienvenido, {profile?.display_name}</p>
+              <p className="text-sm text-slate-600 mt-1">Bienvenido, {currentProfile?.display_name}</p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-red-600">{profile?.total_points || 0}</p>
-                <p className="text-xs text-slate-600">Puntos (BD)</p>
-                {(() => {
-                  console.log('=== PUNTOS EN HEADER ===')
-                  console.log('Puntos del perfil (de la BD):', profile?.total_points)
-                  console.log('Usuario:', profile?.display_name)
-                  return null
-                })()}
+              <div className="flex items-center gap-2">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-red-600">{currentProfile?.total_points || 0}</p>
+                  <p className="text-xs text-slate-600">Puntos</p>
+                </div>
+                <button
+                  onClick={refreshProfile}
+                  className="text-slate-500 hover:text-red-600 transition-colors p-1"
+                  title="Refrescar puntos"
+                >
+                  🔄
+                </button>
               </div>
               <a
                 href="/rules"
