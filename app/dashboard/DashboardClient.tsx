@@ -779,12 +779,28 @@ function GroupTable({
   const completedMatchesInGroup = completedGroupMatches.filter((m: any) => m.group_id === group).length
   let earnedBonus = false
 
+  // DEBUG: Log group A info
+  if (group === 'A') {
+    console.log('=== DEBUG GRUPO A ===')
+    console.log('Partidos completos:', completedMatchesInGroup)
+    console.log('Group real standings:', groupRealStandings)
+    console.log('Predicted positions:', standings.map(s => ({ team: s.team.name, pos: s.predictedPosition })))
+  }
+
   if (completedMatchesInGroup === 6 && groupRealStandings.length >= 4 && standings.length >= 4) {
     // Check if all predicted positions match real standings
     let allMatch = true
     for (let i = 0; i < 4; i++) {
       const realStanding = groupRealStandings.find((s: any) => s.position === i + 1)
       const teamWithPredictedPos = standings.find((s) => s.predictedPosition === i + 1)
+
+      if (group === 'A') {
+        console.log(`Posición ${i + 1}:`, {
+          realTeam: realStanding?.team_id,
+          predictedTeam: teamWithPredictedPos?.team.id,
+          match: realStanding?.team_id === teamWithPredictedPos?.team.id
+        })
+      }
 
       if (!realStanding || !teamWithPredictedPos || realStanding.team_id !== teamWithPredictedPos.team.id) {
         allMatch = false
@@ -793,6 +809,16 @@ function GroupTable({
     }
 
     earnedBonus = allMatch
+    if (group === 'A') {
+      console.log('Bono otorgado:', earnedBonus)
+    }
+  } else if (group === 'A') {
+    console.log('No se evalúa bono porque:', {
+      completedMatchesInGroup,
+      needsToBeExactly: 6,
+      groupRealStandingsLength: groupRealStandings.length,
+      standingsLength: standings.length
+    })
   }
 
   return (
@@ -1082,12 +1108,30 @@ function RankingTab({ currentUserId }: { currentUserId: string }) {
             // Count completed matches in this group
             const completedMatchesInGroup = groupMatches?.filter((m: any) => m.group_id === groupId).length || 0
 
+            // DEBUG for group A
+            if (groupId === 'A') {
+              console.log('=== DEBUG RANKING - GRUPO A ===')
+              console.log('User:', profile.name)
+              console.log('Partidos completos:', completedMatchesInGroup)
+              console.log('Group real standings:', groupRealStandings)
+              console.log('Position predictions:', groupPositionPreds)
+            }
+
             // Award bonus only if all 6 matches are complete and all 4 positions match exactly
             if (completedMatchesInGroup === 6 && groupRealStandings.length >= 4 && groupPositionPreds.length >= 4) {
               let allMatch = true
               for (let position = 1; position <= 4; position++) {
                 const realStanding = groupRealStandings.find((s: any) => s.position === position)
                 const posPred = groupPositionPreds.find((pp: any) => pp.predicted_position === position)
+
+                if (groupId === 'A') {
+                  console.log(`Pos ${position}:`, {
+                    realTeamId: realStanding?.team_id,
+                    predTeamId: posPred?.team_id,
+                    match: realStanding?.team_id === posPred?.team_id
+                  })
+                }
+
                 if (!realStanding || !posPred || realStanding.team_id !== posPred.team_id) {
                   allMatch = false
                   break
@@ -1095,7 +1139,17 @@ function RankingTab({ currentUserId }: { currentUserId: string }) {
               }
               if (allMatch) {
                 groupOrderBonus += 3
+                if (groupId === 'A') {
+                  console.log('✅ Bono otorgado para grupo A')
+                }
               }
+            } else if (groupId === 'A') {
+              console.log('❌ No se evalúa bono porque:', {
+                completedMatchesInGroup,
+                needsToBeExactly: 6,
+                groupRealStandingsLength: groupRealStandings.length,
+                groupPositionPredsLength: groupPositionPreds.length
+              })
             }
           })
         }
@@ -1106,6 +1160,9 @@ function RankingTab({ currentUserId }: { currentUserId: string }) {
         const thirdPlace = specialPreds?.find(sp => sp.type === 'third_place')?.points_earned || 0
         const mvp = specialPreds?.find(sp => sp.type === 'mvp')?.points_earned || 0
         const topScorer = specialPreds?.find(sp => sp.type === 'top_scorer')?.points_earned || 0
+
+        // DEBUG: Log final groupOrderBonus
+        console.log(`Total groupOrderBonus para ${profile.name}:`, groupOrderBonus)
 
         // Calculate total points by summing all categories
         const totalCalculated =
