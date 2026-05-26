@@ -2562,8 +2562,8 @@ function EstadisticasTab() {
   return (
     <div className="space-y-8">
       {/* Special Predictions Distribution */}
-      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-        <h2 className="text-2xl font-bold text-white mb-6">📊 Distribución de Predicciones Especiales</h2>
+      <div className="bg-white rounded-lg border border-red-100 p-6">
+        <h2 className="text-2xl font-bold text-slate-800 mb-6">📊 Distribución de Predicciones Especiales</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Object.entries(specialByType).map(([type, values]) => {
             const chartData = Object.entries(values).map(([value, count]) => ({
@@ -2572,21 +2572,27 @@ function EstadisticasTab() {
             }))
 
             return (
-              <div key={type} className="bg-white/5 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-white mb-3 text-center">
+              <div key={type} className="bg-slate-50 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-slate-800 mb-3 text-center">
                   {typeLabels[type] || type}
                 </h3>
-                <ResponsiveContainer width="100%" height={250}>
+                <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
                       data={chartData}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
-                      outerRadius={80}
+                      label={({ name, percent }) => {
+                        const pct = ((percent || 0) * 100).toFixed(0)
+                        // Truncate name if too long
+                        const displayName = name.length > 10 ? name.substring(0, 10) + '...' : name
+                        return `${displayName} ${pct}%`
+                      }}
+                      outerRadius={70}
                       fill="#8884d8"
                       dataKey="value"
+                      style={{ fontSize: '11px', fontWeight: '600' }}
                     >
                       {chartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -2602,13 +2608,13 @@ function EstadisticasTab() {
       </div>
 
       {/* General Ranking Chart */}
-      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-        <h2 className="text-2xl font-bold text-white mb-6">🏆 Ranking General (Top 10)</h2>
+      <div className="bg-white rounded-lg border border-red-100 p-6">
+        <h2 className="text-2xl font-bold text-slate-800 mb-6">🏆 Ranking General (Top 10)</h2>
         <ResponsiveContainer width="100%" height={400}>
           <BarChart data={data.users} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis type="number" />
-            <YAxis dataKey="display_name" type="category" width={150} />
+            <YAxis dataKey="display_name" type="category" width={150} style={{ fontSize: '12px' }} />
             <Tooltip />
             <Bar dataKey="total_points" fill="#dc2626" name="Puntos">
               {data.users.map((entry: any, index: number) => (
@@ -2631,19 +2637,19 @@ function EstadisticasTab() {
       </div>
 
       {/* Current Streaks */}
-      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-        <h2 className="text-2xl font-bold text-white mb-6">🔥 Rachas Actuales</h2>
+      <div className="bg-white rounded-lg border border-red-100 p-6">
+        <h2 className="text-2xl font-bold text-slate-800 mb-6">🔥 Rachas Actuales</h2>
         {data.streaks.length === 0 ? (
-          <p className="text-white/70 text-center py-4">No hay rachas activas</p>
+          <p className="text-slate-600 text-center py-4">No hay rachas activas</p>
         ) : (
           <div className="space-y-3">
             {data.streaks.slice(0, 5).map((streak: any, index: number) => (
               <div
                 key={index}
-                className="bg-white/5 rounded-lg p-4 flex justify-between items-center"
+                className="bg-slate-50 rounded-lg p-4 flex justify-between items-center"
               >
-                <span className="text-white font-medium">{streak.display_name}</span>
-                <span className="text-yellow-400 font-bold text-lg">
+                <span className="text-slate-800 font-medium">{streak.display_name}</span>
+                <span className="text-yellow-600 font-bold text-lg">
                   {streak.streak} {streak.streak === 1 ? 'partido' : 'partidos'}
                 </span>
               </div>
@@ -2653,8 +2659,8 @@ function EstadisticasTab() {
       </div>
 
       {/* Most Picked Scores by Match */}
-      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-        <h2 className="text-2xl font-bold text-white mb-6">🎯 Marcadores Más Escogidos</h2>
+      <div className="bg-white rounded-lg border border-red-100 p-6">
+        <h2 className="text-2xl font-bold text-slate-800 mb-6">🎯 Marcadores Más Escogidos</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Object.entries(predsByMatch)
             .slice(0, 10)
@@ -2666,17 +2672,17 @@ function EstadisticasTab() {
               const matchInfo = data.predictions.find((p: any) => p.match_id === parseInt(matchId))
 
               return (
-                <div key={matchId} className="bg-white/5 rounded-lg p-4">
-                  <h3 className="text-white font-semibold mb-3">
+                <div key={matchId} className="bg-slate-50 rounded-lg p-4">
+                  <h3 className="text-slate-800 font-semibold mb-3">
                     Partido #{matchInfo?.match?.match_number || matchId}
                   </h3>
                   <div className="space-y-2">
                     {sortedScores.map(([score, count], index) => (
                       <div key={score} className="flex justify-between items-center">
-                        <span className="text-white/90">
+                        <span className="text-slate-700">
                           {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'} {score}
                         </span>
-                        <span className="text-yellow-400 font-bold">{count}</span>
+                        <span className="text-yellow-600 font-bold">{count}</span>
                       </div>
                     ))}
                   </div>
