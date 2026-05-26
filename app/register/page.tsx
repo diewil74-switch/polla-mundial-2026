@@ -51,7 +51,7 @@ export default function RegisterPage() {
     }
 
     if (registrationClosed) {
-      setError('El registro está cerrado. Ya hay 20 usuarios registrados.')
+      setError('El registro está cerrado. Ya hay 30 usuarios registrados.')
       return
     }
 
@@ -63,8 +63,8 @@ export default function RegisterPage() {
         .from('profiles')
         .select('*', { count: 'exact', head: true })
 
-      if (count !== null && count >= 20) {
-        setError('El registro está cerrado. Ya hay 20 usuarios registrados.')
+      if (count !== null && count >= 30) {
+        setError('El registro está cerrado. Ya hay 30 usuarios registrados.')
         setRegistrationClosed(true)
         return
       }
@@ -158,7 +158,7 @@ export default function RegisterPage() {
                 Registro Cerrado
               </h2>
               <p className="text-slate-600 mb-6">
-                Lo sentimos, ya hay 20 usuarios registrados y el cupo está completo.
+                Lo sentimos, ya hay 30 usuarios registrados y el cupo está completo.
               </p>
               <Link
                 href="/"
@@ -185,7 +185,7 @@ export default function RegisterPage() {
           <p className="text-slate-600">Crea tu cuenta para participar</p>
           {userCount !== null && (
             <p className="text-sm text-slate-500 mt-2">
-              {userCount}/20 usuarios registrados
+              {userCount}/30 usuarios registrados
             </p>
           )}
         </div>
