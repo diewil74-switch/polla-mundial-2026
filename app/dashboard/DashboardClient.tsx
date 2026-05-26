@@ -2204,10 +2204,11 @@ function ResultadosTab() {
           match_date,
           home_score,
           away_score,
+          home_team_label,
+          away_team_label,
           home_team:teams!matches_home_team_id_fkey(name, flag_emoji),
           away_team:teams!matches_away_team_id_fkey(name, flag_emoji)
         `)
-        .eq('phase', 'groups')
         .order('match_date')
         .order('match_number')
 
@@ -2321,15 +2322,27 @@ function ResultadosTab() {
                       const isPredictionVisible = new Date() >= fifteenMinBefore
                       const hasResult = match.home_score !== null && match.away_score !== null
 
+                      const homeTeamDisplay = match.home_team?.name || match.home_team_label || 'TBD'
+                      const awayTeamDisplay = match.away_team?.name || match.away_team_label || 'TBD'
+                      const phaseLabels: Record<string, string> = {
+                        groups: 'Grupos',
+                        r16: 'Octavos',
+                        r8: 'Cuartos',
+                        r4: 'Semifinal',
+                        '3rd': '3er Lugar',
+                        final: 'Final'
+                      }
+
                       return (
                         <tr key={match.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
                           <td className="px-3 py-2 text-sm sticky left-0 bg-inherit z-10 border-r">
                             <div className="font-medium">
-                              {match.home_team?.flag_emoji} {match.home_team?.name} vs{' '}
-                              {match.away_team?.flag_emoji} {match.away_team?.name}
+                              {match.home_team?.flag_emoji} {homeTeamDisplay} vs{' '}
+                              {match.away_team?.flag_emoji} {awayTeamDisplay}
                             </div>
                             <div className="text-xs text-slate-500">
-                              #{match.match_number} • Grupo {match.group_id}
+                              #{match.match_number} • {phaseLabels[match.phase] || match.phase}
+                              {match.group_id && ` • Grupo ${match.group_id}`}
                             </div>
                           </td>
 
