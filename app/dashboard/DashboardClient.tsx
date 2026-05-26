@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 type Profile = {
   id: string
@@ -70,6 +71,8 @@ export default function DashboardClient({ user, profile }: { user: User, profile
     { id: 'groups', label: 'Grupos', icon: '🏆' },
     { id: 'bracket', label: 'Bracket', icon: '🏅' },
     { id: 'ranking', label: 'Ranking', icon: '📊' },
+    { id: 'resultados', label: 'Resultados', icon: '📋' },
+    { id: 'estadisticas', label: 'Estadísticas', icon: '📈' },
     { id: 'special', label: 'Especiales', icon: '⭐' },
   ]
 
@@ -175,6 +178,8 @@ export default function DashboardClient({ user, profile }: { user: User, profile
         {activeTab === 'groups' && <GroupsTab userId={user.id} />}
         {activeTab === 'bracket' && <BracketTab />}
         {activeTab === 'ranking' && <RankingTab currentUserId={user.id} />}
+        {activeTab === 'resultados' && <ResultadosTab />}
+        {activeTab === 'estadisticas' && <EstadisticasTab />}
         {activeTab === 'special' && <SpecialTab userId={user.id} />}
       </div>
     </div>
@@ -2164,6 +2169,522 @@ function SpecialPredictionField({
       {locked && (
         <p className="text-xs text-red-600 mt-1">Predicción bloqueada (deadline pasado)</p>
       )}
+    </div>
+  )
+}
+
+// ====================================
+// RESULTADOS TAB
+// ====================================
+function ResultadosTab() {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
+
+  useEffect(() => {
+    loadResultados()
+  }, [])
+
+  async function loadResultados() {
+    try {
+      // Load all users
+      const { data: users } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .order('display_name')
+
+      // Load all matches with results
+      const { data: matches } = await supabase
+        .from('matches')
+        .select(`
+          id,
+          match_number,
+          phase,
+          group_id,
+          match_date,
+          home_score,
+          away_score,
+          home_team:teams!matches_home_team_id_fkey(name, flag_emoji),
+          away_team:teams!matches_away_team_id_fkey(name, flag_emoji)
+        `)
+        .eq('phase', 'groups')
+        .order('match_date')
+        .order('match_number')
+
+      // Load all predictions
+      const { data: predictions } = await supabase
+        .from('predictions')
+        .select('user_id, match_id, pred_home, pred_away, points_earned')
+
+      if (!users || !matches || !predictions) {
+        setLoading(false)
+        return
+      }
+
+      // Group matches by date
+      const matchesByDate: Record<string, any[]> = {}
+      matches.forEach((match: any) => {
+        const date = new Date(match.match_date).toLocaleDateString('es-CO', {
+          timeZone: 'America/Bogota',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+
+        if (!matchesByDate[date]) {
+          matchesByDate[date] = []
+        }
+        matchesByDate[date].push(match)
+      })
+
+      // Organize predictions by user and match
+      const predsByUserAndMatch: Record<string, Record<number, any>> = {}
+      predictions.forEach((pred: any) => {
+        if (!predsByUserAndMatch[pred.user_id]) {
+          predsByUserAndMatch[pred.user_id] = {}
+        }
+        predsByUserAndMatch[pred.user_id][pred.match_id] = pred
+      })
+
+      setData({
+        users,
+        matchesByDate,
+        predsByUserAndMatch
+      })
+    } catch (error) {
+      console.error('Error loading resultados:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) return <div className="text-center py-12">Cargando...</div>
+  if (!data) return <div className="text-center py-12">No hay datos disponibles</div>
+
+  const { users, matchesByDate, predsByUserAndMatch } = data
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-slate-800">Tabla de Resultados por Participante</h2>
+      <p className="text-sm text-slate-600">
+        Los marcadores se revelan 15 minutos antes del inicio de cada partido
+      </p>
+
+      <div className="overflow-x-auto">
+        <div className="inline-block min-w-full">
+          {Object.entries(matchesByDate).map(([date, dateMatches]: [string, any]) => {
+            // Calculate subtotal by user for this date
+            const dateSubtotals: Record<string, number> = {}
+            users.forEach((user: any) => {
+              dateSubtotals[user.id] = dateMatches.reduce((sum: number, match: any) => {
+                const pred = predsByUserAndMatch[user.id]?.[match.id]
+                return sum + (pred?.points_earned || 0)
+              }, 0)
+            })
+
+            return (
+              <div key={date} className="mb-8">
+                <h3 className="text-lg font-bold text-red-600 mb-3 sticky left-0 bg-white">
+                  📅 {date}
+                </h3>
+
+                <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
+                  <thead>
+                    <tr className="bg-red-600 text-white text-xs">
+                      <th className="px-3 py-2 text-left sticky left-0 bg-red-600 z-10 min-w-[200px]">
+                        Partido
+                      </th>
+                      {users.map((user: any) => (
+                        <th key={user.id} colSpan={2} className="px-2 py-2 text-center border-l border-red-500">
+                          <div className="font-semibold truncate">{user.display_name}</div>
+                        </th>
+                      ))}
+                      <th className="px-3 py-2 text-center border-l-2 border-white">
+                        Resultado Real
+                      </th>
+                    </tr>
+                    <tr className="bg-red-500 text-white text-xs">
+                      <th className="px-3 py-1 sticky left-0 bg-red-500 z-10"></th>
+                      {users.map((user: any) => (
+                        <React.Fragment key={user.id}>
+                          <th className="px-1 py-1 text-center border-l border-red-400">Pred</th>
+                          <th className="px-1 py-1 text-center">Pts</th>
+                        </React.Fragment>
+                      ))}
+                      <th className="px-3 py-1 border-l-2 border-white"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dateMatches.map((match: any, idx: number) => {
+                      const matchDate = new Date(match.match_date)
+                      const fifteenMinBefore = new Date(matchDate.getTime() - 15 * 60 * 1000)
+                      const isPredictionVisible = new Date() >= fifteenMinBefore
+                      const hasResult = match.home_score !== null && match.away_score !== null
+
+                      return (
+                        <tr key={match.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                          <td className="px-3 py-2 text-sm sticky left-0 bg-inherit z-10 border-r">
+                            <div className="font-medium">
+                              {match.home_team?.flag_emoji} {match.home_team?.name} vs{' '}
+                              {match.away_team?.flag_emoji} {match.away_team?.name}
+                            </div>
+                            <div className="text-xs text-slate-500">
+                              #{match.match_number} • Grupo {match.group_id}
+                            </div>
+                          </td>
+
+                          {users.map((user: any) => {
+                            const pred = predsByUserAndMatch[user.id]?.[match.id]
+
+                            return (
+                              <React.Fragment key={user.id}>
+                                <td className="px-1 py-2 text-center text-sm border-l">
+                                  {pred && isPredictionVisible ? (
+                                    <span className="font-mono">{pred.pred_home}-{pred.pred_away}</span>
+                                  ) : (
+                                    <span className="text-slate-300">—</span>
+                                  )}
+                                </td>
+                                <td className="px-1 py-2 text-center text-sm">
+                                  {pred?.points_earned > 0 ? (
+                                    <span className="font-semibold text-green-600">
+                                      +{pred.points_earned}
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-400">0</span>
+                                  )}
+                                </td>
+                              </React.Fragment>
+                            )
+                          })}
+
+                          <td className="px-3 py-2 text-center text-sm font-bold border-l-2">
+                            {hasResult ? (
+                              <span className="text-red-600 font-mono">
+                                {match.home_score}-{match.away_score}
+                              </span>
+                            ) : (
+                              <span className="text-slate-300">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+
+                    {/* Subtotal Row */}
+                    <tr className="bg-slate-100 font-bold">
+                      <td className="px-3 py-2 text-sm sticky left-0 bg-slate-100 z-10 border-r">
+                        Subtotal {date}
+                      </td>
+                      {users.map((user: any) => (
+                        <React.Fragment key={user.id}>
+                          <td className="px-1 py-2 text-center border-l"></td>
+                          <td className="px-1 py-2 text-center text-sm text-red-600">
+                            {dateSubtotals[user.id]}
+                          </td>
+                        </React.Fragment>
+                      ))}
+                      <td className="px-3 py-2 border-l-2"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )
+          })}
+
+          {/* Grand Total Row */}
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden mt-4">
+            <table className="w-full">
+              <tbody>
+                <tr className="bg-red-600 text-white font-bold">
+                  <td className="px-3 py-3 text-sm sticky left-0 bg-red-600 z-10 min-w-[200px]">
+                    TOTAL GENERAL
+                  </td>
+                  {users.map((user: any) => {
+                    const totalPoints = Object.values(predsByUserAndMatch[user.id] || {}).reduce(
+                      (sum: number, pred: any) => sum + (pred.points_earned || 0),
+                      0
+                    )
+
+                    return (
+                      <React.Fragment key={user.id}>
+                        <td className="px-1 py-3 text-center border-l border-red-500"></td>
+                        <td className="px-1 py-3 text-center text-base">
+                          {totalPoints}
+                        </td>
+                      </React.Fragment>
+                    )
+                  })}
+                  <td className="px-3 py-3 border-l-2 border-white"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// ESTADÍSTICAS TAB
+// ============================================
+
+function EstadisticasTab() {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
+
+  useEffect(() => {
+    loadEstadisticas()
+  }, [])
+
+  async function loadEstadisticas() {
+    try {
+      // Load special predictions grouped by type
+      const { data: specialPreds } = await supabase
+        .from('special_predictions')
+        .select('type, value, user_id')
+
+      // Load all predictions with match info to get most picked scores
+      const { data: predictions } = await supabase
+        .from('predictions')
+        .select(`
+          pred_home,
+          pred_away,
+          match_id,
+          points_earned,
+          user_id,
+          match:matches!inner(match_number, phase, match_date)
+        `)
+
+      // Load top 10 users by points
+      const { data: users } = await supabase
+        .from('profiles')
+        .select('display_name, total_points')
+        .order('total_points', { ascending: false })
+        .limit(10)
+
+      // Calculate current streaks
+      const { data: allUsers } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+
+      const { data: allPredictions } = await supabase
+        .from('predictions')
+        .select(`
+          user_id,
+          points_earned,
+          match_id,
+          match:matches!inner(match_number, status)
+        `)
+        .eq('match:matches.status', 'finished')
+        .order('match:matches.match_number', { ascending: false })
+
+      // Calculate streaks
+      const streaks: any[] = []
+      allUsers?.forEach((user: any) => {
+        const userPreds = allPredictions?.filter((p: any) => p.user_id === user.id) || []
+        let currentStreak = 0
+        for (const pred of userPreds) {
+          if (pred.points_earned > 0) {
+            currentStreak++
+          } else {
+            break
+          }
+        }
+        if (currentStreak > 0) {
+          streaks.push({ display_name: user.display_name, streak: currentStreak })
+        }
+      })
+      streaks.sort((a, b) => b.streak - a.streak)
+
+      setData({ specialPreds, predictions, users, streaks })
+    } catch (error) {
+      console.error('Error loading estadísticas:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="text-white">Cargando estadísticas...</div>
+      </div>
+    )
+  }
+
+  if (!data) {
+    return (
+      <div className="text-center py-12 text-white">
+        No hay datos de estadísticas disponibles
+      </div>
+    )
+  }
+
+  // Group special predictions by type
+  const specialByType: Record<string, Record<string, number>> = {}
+  data.specialPreds?.forEach((pred: any) => {
+    if (!specialByType[pred.type]) {
+      specialByType[pred.type] = {}
+    }
+    if (!specialByType[pred.type][pred.value]) {
+      specialByType[pred.type][pred.value] = 0
+    }
+    specialByType[pred.type][pred.value]++
+  })
+
+  // Group predictions by match to find most picked scores
+  const predsByMatch: Record<number, Record<string, number>> = {}
+  data.predictions?.forEach((pred: any) => {
+    const matchId = pred.match_id
+    const score = `${pred.pred_home}-${pred.pred_away}`
+    if (!predsByMatch[matchId]) {
+      predsByMatch[matchId] = {}
+    }
+    if (!predsByMatch[matchId][score]) {
+      predsByMatch[matchId][score] = 0
+    }
+    predsByMatch[matchId][score]++
+  })
+
+  const COLORS = ['#dc2626', '#ca8a04', '#65a30d', '#0891b2', '#4f46e5', '#9333ea', '#db2777']
+
+  const typeLabels: Record<string, string> = {
+    champion: 'Campeón',
+    runner_up: 'Subcampeón',
+    third_place: 'Tercer Lugar',
+    top_scorer: 'Goleador',
+    mvp: 'MVP'
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Special Predictions Distribution */}
+      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+        <h2 className="text-2xl font-bold text-white mb-6">📊 Distribución de Predicciones Especiales</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Object.entries(specialByType).map(([type, values]) => {
+            const chartData = Object.entries(values).map(([value, count]) => ({
+              name: value,
+              value: count
+            }))
+
+            return (
+              <div key={type} className="bg-white/5 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-white mb-3 text-center">
+                  {typeLabels[type] || type}
+                </h3>
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* General Ranking Chart */}
+      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+        <h2 className="text-2xl font-bold text-white mb-6">🏆 Ranking General (Top 10)</h2>
+        <ResponsiveContainer width="100%" height={400}>
+          <BarChart data={data.users} layout="vertical">
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis type="number" />
+            <YAxis dataKey="display_name" type="category" width={150} />
+            <Tooltip />
+            <Bar dataKey="total_points" fill="#dc2626" name="Puntos">
+              {data.users.map((entry: any, index: number) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={
+                    index === 0
+                      ? '#ca8a04' // Gold for 1st
+                      : index === 1
+                      ? '#9ca3af' // Silver for 2nd
+                      : index === 2
+                      ? '#c2410c' // Bronze for 3rd
+                      : '#dc2626' // Red for rest
+                  }
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Current Streaks */}
+      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+        <h2 className="text-2xl font-bold text-white mb-6">🔥 Rachas Actuales</h2>
+        {data.streaks.length === 0 ? (
+          <p className="text-white/70 text-center py-4">No hay rachas activas</p>
+        ) : (
+          <div className="space-y-3">
+            {data.streaks.slice(0, 5).map((streak: any, index: number) => (
+              <div
+                key={index}
+                className="bg-white/5 rounded-lg p-4 flex justify-between items-center"
+              >
+                <span className="text-white font-medium">{streak.display_name}</span>
+                <span className="text-yellow-400 font-bold text-lg">
+                  {streak.streak} {streak.streak === 1 ? 'partido' : 'partidos'}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Most Picked Scores by Match */}
+      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+        <h2 className="text-2xl font-bold text-white mb-6">🎯 Marcadores Más Escogidos</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Object.entries(predsByMatch)
+            .slice(0, 10)
+            .map(([matchId, scores]) => {
+              const sortedScores = Object.entries(scores)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 3)
+
+              const matchInfo = data.predictions.find((p: any) => p.match_id === parseInt(matchId))
+
+              return (
+                <div key={matchId} className="bg-white/5 rounded-lg p-4">
+                  <h3 className="text-white font-semibold mb-3">
+                    Partido #{matchInfo?.match?.match_number || matchId}
+                  </h3>
+                  <div className="space-y-2">
+                    {sortedScores.map(([score, count], index) => (
+                      <div key={score} className="flex justify-between items-center">
+                        <span className="text-white/90">
+                          {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'} {score}
+                        </span>
+                        <span className="text-yellow-400 font-bold">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+        </div>
+      </div>
     </div>
   )
 }
