@@ -2599,7 +2599,7 @@ function EstadisticasTab() {
                       label={({ name, percent }) => {
                         const pct = ((percent || 0) * 100).toFixed(0)
                         // Truncate name if too long
-                        const displayName = name.length > 10 ? name.substring(0, 10) + '...' : name
+                        const displayName = name && name.length > 10 ? name.substring(0, 10) + '...' : (name || '')
                         return `${displayName} ${pct}%`
                       }}
                       outerRadius={70}
