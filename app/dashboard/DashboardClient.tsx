@@ -2542,10 +2542,25 @@ function EstadisticasTab() {
     if (!specialByType[pred.type]) {
       specialByType[pred.type] = {}
     }
-    if (!specialByType[pred.type][pred.value]) {
-      specialByType[pred.type][pred.value] = 0
+
+    // Parse JSON values for MVP and top_scorer (they contain first_name/last_name)
+    let displayValue = pred.value
+    if (pred.type === 'mvp' || pred.type === 'top_scorer') {
+      try {
+        const parsed = typeof pred.value === 'string' ? JSON.parse(pred.value) : pred.value
+        if (parsed.first_name && parsed.last_name) {
+          displayValue = `${parsed.first_name} ${parsed.last_name}`
+        }
+      } catch (e) {
+        // If parsing fails, use value as is
+        displayValue = pred.value
+      }
     }
-    specialByType[pred.type][pred.value]++
+
+    if (!specialByType[pred.type][displayValue]) {
+      specialByType[pred.type][displayValue] = 0
+    }
+    specialByType[pred.type][displayValue]++
   })
 
   // Group predictions by match to find most picked scores
