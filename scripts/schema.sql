@@ -112,6 +112,41 @@ CREATE INDEX IF NOT EXISTS idx_special_predictions_type ON special_predictions(t
 CREATE INDEX IF NOT EXISTS idx_special_predictions_locked ON special_predictions(locked);
 
 -- ============================================
+-- GRANTS (Data API exposure)
+-- ============================================
+-- Requerido para Supabase Data API (nuevo comportamiento desde Oct 2026)
+-- Sin estos grants, las tablas no serán accesibles via supabase-js
+
+-- PROFILES
+GRANT SELECT ON public.profiles TO anon, authenticated;
+GRANT INSERT, UPDATE ON public.profiles TO authenticated;
+GRANT ALL ON public.profiles TO service_role;
+
+-- TEAMS (solo lectura para usuarios)
+GRANT SELECT ON public.teams TO anon, authenticated;
+GRANT ALL ON public.teams TO service_role;
+
+-- MATCHES (solo lectura para usuarios)
+GRANT SELECT ON public.matches TO anon, authenticated;
+GRANT ALL ON public.matches TO service_role;
+
+-- PREDICTIONS
+GRANT SELECT ON public.predictions TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.predictions TO authenticated;
+GRANT ALL ON public.predictions TO service_role;
+
+-- SPECIAL_PREDICTIONS
+GRANT SELECT ON public.special_predictions TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.special_predictions TO authenticated;
+GRANT ALL ON public.special_predictions TO service_role;
+
+-- Grants para secuencias (necesarios para INSERT con SERIAL)
+GRANT USAGE, SELECT ON SEQUENCE teams_id_seq TO authenticated, service_role;
+GRANT USAGE, SELECT ON SEQUENCE matches_id_seq TO authenticated, service_role;
+GRANT USAGE, SELECT ON SEQUENCE predictions_id_seq TO authenticated, service_role;
+GRANT USAGE, SELECT ON SEQUENCE special_predictions_id_seq TO authenticated, service_role;
+
+-- ============================================
 -- ROW LEVEL SECURITY (RLS)
 -- ============================================
 
