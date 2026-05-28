@@ -2455,11 +2455,14 @@ function EstadisticasTab() {
   async function loadEstadisticas() {
     try {
       // Load special predictions grouped by type
+      // Get all predictions with their IDs and updated_at to filter latest per user-type
       const { data: specialPreds } = await supabase
         .from('special_predictions')
-        .select('type, value, user_id')
+        .select('id, type, value, user_id, updated_at')
+        .order('updated_at', { ascending: false })
 
       // Load all predictions with match info to get most picked scores
+      // Order by updated_at to get latest predictions per user-match
       const { data: predictions } = await supabase
         .from('predictions')
         .select(`
@@ -2468,8 +2471,10 @@ function EstadisticasTab() {
           match_id,
           points_earned,
           user_id,
+          updated_at,
           match:matches!inner(match_number, phase, match_date)
         `)
+        .order('updated_at', { ascending: false })
 
       // Load top 10 users by points
       const { data: users } = await supabase
@@ -2536,9 +2541,21 @@ function EstadisticasTab() {
     )
   }
 
-  // Group special predictions by type
-  const specialByType: Record<string, Record<string, number>> = {}
+  // Group special predictions by type - only count latest prediction per user per type
+  const latestPredsByUserAndType: Record<string, any> = {}
+
+  // First, get only the latest prediction for each user-type combination
+  // Data is already ordered by updated_at desc, so first occurrence is the latest
   data.specialPreds?.forEach((pred: any) => {
+    const key = `${pred.user_id}-${pred.type}`
+    if (!latestPredsByUserAndType[key]) {
+      latestPredsByUserAndType[key] = pred
+    }
+  })
+
+  // Now group by type with unique predictions
+  const specialByType: Record<string, Record<string, number>> = {}
+  Object.values(latestPredsByUserAndType).forEach((pred: any) => {
     if (!specialByType[pred.type]) {
       specialByType[pred.type] = {}
     }
@@ -2564,8 +2581,18 @@ function EstadisticasTab() {
   })
 
   // Group predictions by match to find most picked scores
-  const predsByMatch: Record<number, Record<string, number>> = {}
+  // First, filter to get only latest prediction per user-match
+  const latestPredsByUserAndMatch: Record<string, any> = {}
   data.predictions?.forEach((pred: any) => {
+    const key = `${pred.user_id}-${pred.match_id}`
+    if (!latestPredsByUserAndMatch[key]) {
+      latestPredsByUserAndMatch[key] = pred
+    }
+  })
+
+  // Now count scores by match with unique predictions only
+  const predsByMatch: Record<number, Record<string, number>> = {}
+  Object.values(latestPredsByUserAndMatch).forEach((pred: any) => {
     const matchId = pred.match_id
     const score = `${pred.pred_home}-${pred.pred_away}`
     if (!predsByMatch[matchId]) {
