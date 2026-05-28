@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 type Profile = {
   id: string
@@ -259,7 +261,7 @@ function PredictionsTab({ userId }: { userId: string }) {
   }
 
   async function clearPrediction(matchId: number) {
-    const { error } = await supabase
+    const { error} = await supabase
       .from('predictions')
       .delete()
       .eq('user_id', userId)
@@ -270,12 +272,79 @@ function PredictionsTab({ userId }: { userId: string }) {
     }
   }
 
+  async function exportToPDF() {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', userId)
+      .single()
+
+    const userName = profile?.display_name || 'Usuario'
+
+    const doc = new jsPDF()
+
+    // Title
+    doc.setFontSize(18)
+    doc.text('Polla Mundial 2026 - Mis Predicciones', 14, 20)
+    doc.setFontSize(12)
+    doc.text(`Participante: ${userName}`, 14, 28)
+    doc.text(`Fecha: ${new Date().toLocaleDateString('es-CO')}`, 14, 34)
+
+    // Prepare data
+    const tableData = matches.map((match) => {
+      const pred = predictions[match.id]
+      const homeTeam = match.home_team?.name || 'TBD'
+      const awayTeam = match.away_team?.name || 'TBD'
+      const matchDate = new Date(match.match_date).toLocaleDateString('es-CO', {
+        day: '2-digit',
+        month: '2-digit',
+      })
+      const prediction = pred ? `${pred.pred_home} - ${pred.pred_away}` : '-'
+      const result = match.home_score !== null && match.away_score !== null
+        ? `${match.home_score} - ${match.away_score}`
+        : '-'
+      const points = pred?.points_earned || 0
+
+      return [`#${match.match_number}`, matchDate, homeTeam, awayTeam, prediction, result, points]
+    })
+
+    autoTable(doc, {
+      head: [['#', 'Fecha', 'Local', 'Visitante', 'Mi Pred.', 'Resultado', 'Pts']],
+      body: tableData,
+      startY: 40,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [220, 38, 38] },
+      columnStyles: {
+        0: { cellWidth: 12 },
+        1: { cellWidth: 22 },
+        2: { cellWidth: 35 },
+        3: { cellWidth: 35 },
+        4: { cellWidth: 20 },
+        5: { cellWidth: 20 },
+        6: { cellWidth: 12 },
+      },
+    })
+
+    // Save
+    doc.save(`polla-predicciones-${userName.replace(/\s+/g, '-')}.pdf`)
+  }
+
   if (loading) return <div className="text-center py-12">Cargando...</div>
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-800">Predicciones - Fase de Grupos</h2>
-      <p className="text-slate-600">72 partidos. Haz tus predicciones antes de que inicie cada partido.</p>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">Predicciones - Fase de Grupos</h2>
+          <p className="text-slate-600">72 partidos. Haz tus predicciones antes de que inicie cada partido.</p>
+        </div>
+        <button
+          onClick={exportToPDF}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center gap-2"
+        >
+          📄 Exportar PDF
+        </button>
+      </div>
 
       <div className="space-y-4">
         {matches.map((match) => (
@@ -1449,6 +1518,83 @@ function BracketTab() {
     }
   }
 
+  async function exportToPDF() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', user.id)
+      .single()
+
+    const userName = profile?.display_name || 'Usuario'
+
+    const doc = new jsPDF()
+
+    // Title
+    doc.setFontSize(18)
+    doc.text('Polla Mundial 2026 - Bracket Eliminatorio', 14, 20)
+    doc.setFontSize(12)
+    doc.text(`Participante: ${userName}`, 14, 28)
+    doc.text(`Fecha: ${new Date().toLocaleDateString('es-CO')}`, 14, 34)
+
+    // Prepare data
+    const tableData = matches.map((match) => {
+      const pred = predictions[match.id]
+      const homeTeam = match.home_team?.name || match.home_team_label || 'TBD'
+      const awayTeam = match.away_team?.name || match.away_team_label || 'TBD'
+      const matchDate = new Date(match.match_date).toLocaleDateString('es-CO', {
+        day: '2-digit',
+        month: '2-digit',
+      })
+
+      // For elimination rounds, show predicted qualifier
+      let prediction = '-'
+      if (pred) {
+        const predictedWinner = pred.pred_home > pred.pred_away ? homeTeam : awayTeam
+        prediction = `${predictedWinner} (${pred.pred_home}-${pred.pred_away})`
+      }
+
+      const result = match.home_score !== null && match.away_score !== null
+        ? `${match.home_score} - ${match.away_score}`
+        : '-'
+      const points = pred?.points_earned || 0
+
+      // Phase name
+      let phaseName = ''
+      if (match.match_number >= 73 && match.match_number <= 88) phaseName = 'R32'
+      else if (match.match_number >= 89 && match.match_number <= 96) phaseName = 'R16'
+      else if (match.match_number >= 97 && match.match_number <= 100) phaseName = 'R8'
+      else if (match.match_number >= 101 && match.match_number <= 102) phaseName = 'SF'
+      else if (match.match_number === 103) phaseName = '3rd'
+      else if (match.match_number === 104) phaseName = 'Final'
+
+      return [phaseName, `#${match.match_number}`, matchDate, homeTeam, awayTeam, prediction, result, points]
+    })
+
+    autoTable(doc, {
+      head: [['Fase', '#', 'Fecha', 'Local', 'Visitante', 'Clasificado', 'Resultado', 'Pts']],
+      body: tableData,
+      startY: 40,
+      styles: { fontSize: 7, cellPadding: 1.5 },
+      headStyles: { fillColor: [220, 38, 38] },
+      columnStyles: {
+        0: { cellWidth: 15 },
+        1: { cellWidth: 12 },
+        2: { cellWidth: 18 },
+        3: { cellWidth: 35 },
+        4: { cellWidth: 35 },
+        5: { cellWidth: 30 },
+        6: { cellWidth: 18 },
+        7: { cellWidth: 12 },
+      },
+    })
+
+    // Save
+    doc.save(`polla-bracket-${userName.replace(/\s+/g, '-')}.pdf`)
+  }
+
   if (loading) return <div className="text-center py-12">Cargando bracket...</div>
 
   // Organize matches by phase
@@ -1461,21 +1607,29 @@ function BracketTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Bracket Eliminatorio</h2>
           <p className="text-slate-600">Desde Dieciseisavos de Final hasta la Final</p>
         </div>
-        <button
-          onClick={() => setShowPredictions(!showPredictions)}
-          className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-            showPredictions
-              ? 'bg-red-600 text-white hover:bg-red-700'
-              : 'bg-slate-200 text-slate-800 hover:bg-slate-300'
-          }`}
-        >
-          {showPredictions ? 'Ver Resultados' : 'Hacer Predicciones'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={exportToPDF}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center gap-2"
+          >
+            📄 Exportar PDF
+          </button>
+          <button
+            onClick={() => setShowPredictions(!showPredictions)}
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+              showPredictions
+                ? 'bg-red-600 text-white hover:bg-red-700'
+                : 'bg-slate-200 text-slate-800 hover:bg-slate-300'
+            }`}
+          >
+            {showPredictions ? 'Ver Resultados' : 'Hacer Predicciones'}
+          </button>
+        </div>
       </div>
 
       <div className="overflow-x-auto pb-4">
