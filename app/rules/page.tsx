@@ -41,6 +41,67 @@ export default function RulesPage() {
               <span className="font-bold text-gray-700 text-xl">0 pts</span>
             </div>
           </div>
+
+          <div className="bg-slate-100 rounded-lg p-4 mt-6">
+            <p className="font-semibold text-slate-800 mb-3">📖 Ejemplo de puntuación:</p>
+            <p className="text-sm text-slate-700 mb-3">
+              <strong>Resultado real:</strong> 🇲🇽 México 2-1 Sudáfrica 🇿🇦
+            </p>
+            <div className="space-y-2 text-xs">
+              <div className="bg-white rounded p-2 border-l-4 border-green-500">
+                <p className="font-semibold text-slate-800">Tu predicción: México 2-1 Sudáfrica (eres el único)</p>
+                <p className="text-slate-600 mt-1">
+                  ✅ Marcador exacto: <strong>3 pts</strong><br/>
+                  ✅ Gol local (2): <strong>1 pt</strong><br/>
+                  ✅ Gol visitante (1): <strong>1 pt</strong><br/>
+                  ✅ Ganador (México): <strong>2 pts</strong><br/>
+                  ✅ Predicción única: <strong>5 pts</strong><br/>
+                  <strong className="text-green-700">Total: 12 puntos</strong>
+                </p>
+              </div>
+              <div className="bg-white rounded p-2 border-l-4 border-blue-500">
+                <p className="font-semibold text-slate-800">Tu predicción: México 2-1 Sudáfrica (otros también)</p>
+                <p className="text-slate-600 mt-1">
+                  ✅ Marcador exacto: <strong>3 pts</strong><br/>
+                  ✅ Gol local (2): <strong>1 pt</strong><br/>
+                  ✅ Gol visitante (1): <strong>1 pt</strong><br/>
+                  ✅ Ganador (México): <strong>2 pts</strong><br/>
+                  ❌ Predicción única: <strong>0 pts</strong><br/>
+                  <strong className="text-blue-700">Total: 7 puntos</strong>
+                </p>
+              </div>
+              <div className="bg-white rounded p-2 border-l-4 border-yellow-500">
+                <p className="font-semibold text-slate-800">Tu predicción: México 3-1 Sudáfrica</p>
+                <p className="text-slate-600 mt-1">
+                  ❌ Marcador exacto: <strong>0 pts</strong><br/>
+                  ❌ Gol local (3≠2): <strong>0 pts</strong><br/>
+                  ✅ Gol visitante (1): <strong>1 pt</strong><br/>
+                  ✅ Ganador (México): <strong>2 pts</strong><br/>
+                  <strong className="text-yellow-700">Total: 3 puntos</strong>
+                </p>
+              </div>
+              <div className="bg-white rounded p-2 border-l-4 border-orange-500">
+                <p className="font-semibold text-slate-800">Tu predicción: México 1-0 Sudáfrica</p>
+                <p className="text-slate-600 mt-1">
+                  ❌ Marcador exacto: <strong>0 pts</strong><br/>
+                  ❌ Gol local (1≠2): <strong>0 pts</strong><br/>
+                  ❌ Gol visitante (0≠1): <strong>0 pts</strong><br/>
+                  ✅ Ganador (México): <strong>2 pts</strong><br/>
+                  <strong className="text-orange-700">Total: 2 puntos</strong>
+                </p>
+              </div>
+              <div className="bg-white rounded p-2 border-l-4 border-red-500">
+                <p className="font-semibold text-slate-800">Tu predicción: Sudáfrica 2-0 México</p>
+                <p className="text-slate-600 mt-1">
+                  ❌ Marcador exacto: <strong>0 pts</strong><br/>
+                  ❌ Gol local: <strong>0 pts</strong><br/>
+                  ❌ Gol visitante: <strong>0 pts</strong><br/>
+                  ❌ Ganador (predijiste Sudáfrica, ganó México): <strong>0 pts</strong><br/>
+                  <strong className="text-red-700">Total: 0 puntos</strong>
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Bono orden de grupo */}
