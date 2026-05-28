@@ -3,7 +3,7 @@
 import { useState, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { calculateMatchPoints } from '@/lib/scoring'
+import { calculateMatchPointsWithBonus } from '@/lib/scoring'
 import type { User } from '@supabase/supabase-js'
 
 type Profile = {
@@ -257,10 +257,17 @@ function ResultsTab() {
       }
 
       if (predictions && predictions.length > 0) {
+        // Convert predictions to format expected by scoring function
+        const allPredictions = predictions.map((p) => ({
+          pred_home: p.pred_home,
+          pred_away: p.pred_away,
+        }))
+
         for (const pred of predictions) {
-          const points = calculateMatchPoints(
+          const points = calculateMatchPointsWithBonus(
             { ...match, home_score: homeScore, away_score: awayScore, winner_team_id: winnerId },
-            { pred_home: pred.pred_home, pred_away: pred.pred_away }
+            { pred_home: pred.pred_home, pred_away: pred.pred_away },
+            allPredictions
           )
 
           await supabase
@@ -402,11 +409,21 @@ function ResultsTab() {
           .eq('match_id', match.id)
 
         if (predictions && predictions.length > 0) {
+          // Convert predictions to format expected by scoring function
+          const allPredictions = predictions.map((p) => ({
+            pred_home: p.pred_home,
+            pred_away: p.pred_away,
+          }))
+
           for (const pred of predictions) {
-            const points = calculateMatchPoints(match, {
-              pred_home: pred.pred_home,
-              pred_away: pred.pred_away,
-            })
+            const points = calculateMatchPointsWithBonus(
+              match,
+              {
+                pred_home: pred.pred_home,
+                pred_away: pred.pred_away,
+              },
+              allPredictions
+            )
 
             await supabase
               .from('predictions')

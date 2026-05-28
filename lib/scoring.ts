@@ -123,3 +123,54 @@ export function calculateMatchPoints(
     return calculateEliminationPoints(match, prediction)
   }
 }
+
+/**
+ * Check if a prediction is the only one with exact score
+ * Returns true if this is the ONLY prediction that got the exact score
+ */
+export function isUniquePrediction(
+  match: Match,
+  prediction: Prediction,
+  allPredictions: Prediction[]
+): boolean {
+  // Match must have results
+  if (match.home_score === null || match.away_score === null) {
+    return false
+  }
+
+  // This prediction must have exact score
+  const hasExactScore =
+    prediction.pred_home === match.home_score &&
+    prediction.pred_away === match.away_score
+
+  if (!hasExactScore) {
+    return false
+  }
+
+  // Count how many predictions got exact score
+  const exactScoreCount = allPredictions.filter(
+    (pred) =>
+      pred.pred_home === match.home_score && pred.pred_away === match.away_score
+  ).length
+
+  // It's unique if only one prediction (this one) got it right
+  return exactScoreCount === 1
+}
+
+/**
+ * Calculate points including unique prediction bonus
+ */
+export function calculateMatchPointsWithBonus(
+  match: Match,
+  prediction: Prediction,
+  allPredictions: Prediction[]
+): number {
+  let points = calculateMatchPoints(match, prediction)
+
+  // Add unique prediction bonus (+5 pts)
+  if (isUniquePrediction(match, prediction, allPredictions)) {
+    points += 5
+  }
+
+  return points
+}
