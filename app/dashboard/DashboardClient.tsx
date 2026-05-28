@@ -2472,7 +2472,15 @@ function EstadisticasTab() {
           points_earned,
           user_id,
           updated_at,
-          match:matches!inner(match_number, phase, match_date)
+          match:matches!inner(
+            match_number,
+            phase,
+            match_date,
+            home_team_label,
+            away_team_label,
+            home_team:teams!matches_home_team_id_fkey(name, flag_emoji),
+            away_team:teams!matches_away_team_id_fkey(name, flag_emoji)
+          )
         `)
         .order('updated_at', { ascending: false })
 
@@ -2716,30 +2724,92 @@ function EstadisticasTab() {
       {/* Most Picked Scores by Match */}
       <div className="bg-white rounded-lg border border-red-100 p-6">
         <h2 className="text-2xl font-bold text-slate-800 mb-6">🎯 Marcadores Más Escogidos</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {Object.entries(predsByMatch)
             .map(([matchId, scores]) => {
-              const sortedScores = Object.entries(scores)
-                .sort(([, a], [, b]) => b - a)
-                .slice(0, 3)
-
               const matchInfo = data.predictions.find((p: any) => p.match_id === parseInt(matchId))
+              return {
+                matchId,
+                scores,
+                matchNumber: matchInfo?.match?.match_number || 999,
+                homeTeam: matchInfo?.match?.home_team,
+                awayTeam: matchInfo?.match?.away_team,
+                homeLabel: matchInfo?.match?.home_team_label,
+                awayLabel: matchInfo?.match?.away_team_label
+              }
+            })
+            .sort((a, b) => a.matchNumber - b.matchNumber)
+            .map(({ matchId, scores, matchNumber, homeTeam, awayTeam, homeLabel, awayLabel }) => {
+              // Prepare chart data sorted by count descending
+              const chartData = Object.entries(scores)
+                .map(([score, count]) => ({
+                  score,
+                  count
+                }))
+                .sort((a, b) => b.count - a.count)
+
+              const homeDisplay = homeTeam?.name || homeLabel || 'TBD'
+              const awayDisplay = awayTeam?.name || awayLabel || 'TBD'
 
               return (
                 <div key={matchId} className="bg-slate-50 rounded-lg p-4">
-                  <h3 className="text-slate-800 font-semibold mb-3">
-                    Partido #{matchInfo?.match?.match_number || matchId}
-                  </h3>
-                  <div className="space-y-2">
-                    {sortedScores.map(([score, count], index) => (
-                      <div key={score} className="flex justify-between items-center">
-                        <span className="text-slate-700">
-                          {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'} {score}
-                        </span>
-                        <span className="text-yellow-600 font-bold">{count}</span>
-                      </div>
-                    ))}
+                  <div className="mb-4">
+                    <h3 className="text-slate-800 font-semibold text-center mb-2">
+                      Partido #{matchNumber === 999 ? matchId : matchNumber}
+                    </h3>
+                    <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
+                      <span>{homeTeam?.flag_emoji || '🏴'}</span>
+                      <span className="font-medium">{homeDisplay}</span>
+                      <span>vs</span>
+                      <span className="font-medium">{awayDisplay}</span>
+                      <span>{awayTeam?.flag_emoji || '🏴'}</span>
+                    </div>
                   </div>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="score"
+                        style={{ fontSize: '11px' }}
+                        tick={(props) => {
+                          const { x, y, payload } = props
+                          const [home, away] = payload.value.split('-')
+                          return (
+                            <g transform={`translate(${x},${y})`}>
+                              <text
+                                x={0}
+                                y={0}
+                                dy={10}
+                                textAnchor="middle"
+                                fill="#475569"
+                                fontSize="11"
+                              >
+                                {homeTeam?.flag_emoji || '🏴'} {home}-{away} {awayTeam?.flag_emoji || '🏴'}
+                              </text>
+                            </g>
+                          )
+                        }}
+                        height={40}
+                      />
+                      <YAxis style={{ fontSize: '11px' }} />
+                      <Tooltip
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            return (
+                              <div className="bg-white p-2 border border-slate-200 rounded shadow-sm">
+                                <p className="text-sm font-semibold">{payload[0].payload.score}</p>
+                                <p className="text-sm text-slate-600">
+                                  {payload[0].value} {payload[0].value === 1 ? 'voto' : 'votos'}
+                                </p>
+                              </div>
+                            )
+                          }
+                          return null
+                        }}
+                      />
+                      <Bar dataKey="count" fill="#dc2626" name="Votos" />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               )
             })}
