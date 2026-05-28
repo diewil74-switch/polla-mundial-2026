@@ -2718,7 +2718,6 @@ function EstadisticasTab() {
         <h2 className="text-2xl font-bold text-slate-800 mb-6">🎯 Marcadores Más Escogidos</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Object.entries(predsByMatch)
-            .slice(0, 10)
             .map(([matchId, scores]) => {
               const sortedScores = Object.entries(scores)
                 .sort(([, a], [, b]) => b - a)
