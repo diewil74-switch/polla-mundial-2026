@@ -2945,7 +2945,7 @@ function EstadisticasTab() {
                         }}
                         height={40}
                       />
-                      <YAxis style={{ fontSize: '11px' }} />
+                      <YAxis style={{ fontSize: '11px' }} allowDecimals={false} />
                       <Tooltip
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
