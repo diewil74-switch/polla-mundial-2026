@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 
@@ -12,7 +12,11 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "Polla Mundial 2026",
   description: "Polla familiar para la Copa Mundial FIFA 2026",
-  viewport: "width=device-width, initial-scale=1",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
