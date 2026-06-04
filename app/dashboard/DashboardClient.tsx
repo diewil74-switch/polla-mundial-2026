@@ -2152,12 +2152,14 @@ function SpecialTab({ userId }: { userId: string }) {
         }
       })
 
+      const capitalize = (s: string) => s.replace(/\b\w/g, c => c.toUpperCase())
+
       const topScorer = Object.entries(scorerPicks)
         .sort(([, a]: any, [, b]: any) => b - a)
         .slice(0, 4)
         .map(([key, count]) => {
           const [name, country] = key.split('|')
-          return { name, country, count }
+          return { name: capitalize(name), country, count }
         })
 
       const mvp = Object.entries(mvpPicks)
@@ -2165,7 +2167,7 @@ function SpecialTab({ userId }: { userId: string }) {
         .slice(0, 4)
         .map(([key, count]) => {
           const [name, country] = key.split('|')
-          return { name, country, count }
+          return { name: capitalize(name), country, count }
         })
 
       console.log('[SpecialTab] 📋 Final top scorers:', topScorer)
@@ -3233,10 +3235,13 @@ function EstadisticasTab() {
       try {
         const parsed = typeof pred.value === 'string' ? JSON.parse(pred.value) : pred.value
         if (parsed.first_name && parsed.last_name) {
-          displayValue = `${parsed.first_name} ${parsed.last_name}`
+          const normalize = (s: string) => s.trim().replace(/\s+/g, ' ').toLowerCase()
+          const capitalize = (s: string) => s.replace(/\b\w/g, c => c.toUpperCase())
+          // Use lowercase key for grouping, capitalize for display
+          const normalizedKey = `${normalize(parsed.first_name)} ${normalize(parsed.last_name)}`
+          displayValue = capitalize(normalizedKey)
         }
       } catch (e) {
-        // If parsing fails, use value as is
         displayValue = pred.value
       }
     }
