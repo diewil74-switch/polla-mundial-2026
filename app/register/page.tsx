@@ -106,10 +106,8 @@ export default function RegisterPage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-white px-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">
-              <span className="inline-block mr-2">⚽</span>
-              Polla Mundial 2026
-            </h1>
+            <img src="/tournaments_fifa-world-cup-2026_3000x3000.football-logos.cc.png" alt="FIFA World Cup 2026" className="mx-auto mb-3" style={{ width: 80, height: 80, objectFit: 'contain' }} />
+            <h1 className="text-4xl font-bold text-slate-800 mb-2">Polla Mundial 2026</h1>
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl p-8 border border-red-100">
@@ -145,10 +143,8 @@ export default function RegisterPage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-white px-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">
-              <span className="inline-block mr-2">⚽</span>
-              Polla Mundial 2026
-            </h1>
+            <img src="/tournaments_fifa-world-cup-2026_3000x3000.football-logos.cc.png" alt="FIFA World Cup 2026" className="mx-auto mb-3" style={{ width: 80, height: 80, objectFit: 'contain' }} />
+            <h1 className="text-4xl font-bold text-slate-800 mb-2">Polla Mundial 2026</h1>
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl p-8 border border-red-100">
@@ -178,10 +174,8 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-slate-800 mb-2">
-            <span className="inline-block mr-2">⚽</span>
-            Polla Mundial 2026
-          </h1>
+          <img src="/tournaments_fifa-world-cup-2026_3000x3000.football-logos.cc.png" alt="FIFA World Cup 2026" className="mx-auto mb-3" style={{ width: 80, height: 80, objectFit: 'contain' }} />
+          <h1 className="text-4xl font-bold text-slate-800 mb-2">Polla Mundial 2026</h1>
           <p className="text-slate-600">Crea tu cuenta para participar</p>
           {userCount !== null && (
             <p className="text-sm text-slate-500 mt-2">
