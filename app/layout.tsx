@@ -12,6 +12,7 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "Polla Mundial 2026",
   description: "Polla familiar para la Copa Mundial FIFA 2026",
+  viewport: "width=device-width, initial-scale=1",
 };
 
 export default function RootLayout({
