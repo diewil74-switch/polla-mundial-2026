@@ -15,7 +15,7 @@ export function ScoreStepper({
     <div className={`stepper${disabled ? ' disabled' : ''}`}>
       <button
         type="button"
-        onClick={() => !disabled && onChange(value - 1)}
+        onClick={() => !disabled && onChange(Math.max(0, value - 1))}
         disabled={disabled}
         aria-label="menos"
       >

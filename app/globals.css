@@ -738,4 +738,7 @@ td.p-cell { padding: 0; text-align: center; }
 @media (max-width: 480px) {
   .brand .titles .name { font-size: 16px; }
   .cf-name, .hn-team .cf-name { display: none; }
+  .stepper button { width: 22px; height: 24px; font-size: 15px; }
+  .stepper .sval { width: 22px; font-size: 15px; }
+  .pc-tn { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px; }
 }
