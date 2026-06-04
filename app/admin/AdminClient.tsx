@@ -178,14 +178,100 @@ function ResultsTab() {
         )
       )
 
+      // Get all users with predictions for this match
+      const { data: predictions, error: predError } = await supabase
+        .from('predictions')
+        .select('user_id')
+        .eq('match_id', matchId)
+
       // Recalculate predictions (set points to 0)
-      const { error: predError } = await supabase
+      await supabase
         .from('predictions')
         .update({ points_earned: 0, calculated: false })
         .eq('match_id', matchId)
 
       if (predError) {
         console.error('Error al recalcular predicciones:', predError)
+      }
+
+      // Recalculate total_points for each affected user
+      if (predictions && predictions.length > 0) {
+        const { data: realStandings } = await supabase
+          .from('group_standings')
+          .select('*')
+          .order('group_id')
+          .order('position')
+
+        const uniqueUsers = [...new Set(predictions.map(p => p.user_id))]
+        for (const userId of uniqueUsers) {
+          // Sum all match predictions
+          const { data: userPreds } = await supabase
+            .from('predictions')
+            .select('points_earned')
+            .eq('user_id', userId)
+
+          const matchPoints = userPreds?.reduce((sum, p) => sum + (p.points_earned || 0), 0) || 0
+
+          // Sum all special predictions
+          const { data: specialPreds } = await supabase
+            .from('special_predictions')
+            .select('points_earned')
+            .eq('user_id', userId)
+
+          const specialPoints = specialPreds?.reduce((sum, p) => sum + (p.points_earned || 0), 0) || 0
+
+          // Calculate group order bonus
+          let groupOrderBonus = 0
+          if (realStandings && realStandings.length > 0) {
+            const { data: userPositionPredictions } = await supabase
+              .from('group_position_predictions')
+              .select('*')
+              .eq('user_id', userId)
+
+            const { data: groupMatches } = await supabase
+              .from('matches')
+              .select('group_id, home_score, away_score')
+              .eq('phase', 'groups')
+              .not('home_score', 'is', null)
+              .not('away_score', 'is', null)
+
+            const groups = 'ABCDEFGHIJKL'.split('')
+
+            groups.forEach((groupId) => {
+              const groupRealStandings = realStandings.filter((s: any) => s.group_id === groupId)
+              const groupPositionPreds = userPositionPredictions?.filter(
+                (pp: any) => pp.group_id === groupId
+              ) || []
+
+              const completedMatchesInGroup = groupMatches?.filter((m: any) => m.group_id === groupId).length || 0
+
+              if (completedMatchesInGroup === 6 && groupRealStandings.length >= 4 && groupPositionPreds.length >= 4) {
+                let allMatch = true
+
+                for (let position = 1; position <= 4; position++) {
+                  const realStanding = groupRealStandings.find((s: any) => s.position === position)
+                  const posPred = groupPositionPreds.find((pp: any) => pp.predicted_position === position)
+
+                  if (!realStanding || !posPred || realStanding.team_id !== posPred.team_id) {
+                    allMatch = false
+                    break
+                  }
+                }
+
+                if (allMatch) {
+                  groupOrderBonus += 3
+                }
+              }
+            })
+          }
+
+          const totalPoints = matchPoints + specialPoints + groupOrderBonus
+
+          await supabase
+            .from('profiles')
+            .update({ total_points: totalPoints })
+            .eq('id', userId)
+        }
       }
 
       alert('✅ Resultado anulado correctamente')
@@ -393,16 +479,11 @@ function ResultsTab() {
         .not('home_score', 'is', null)
         .not('away_score', 'is', null)
 
-      if (!matchesWithResults || matchesWithResults.length === 0) {
-        alert('No hay partidos con resultados para recalcular')
-        setRecalculating(false)
-        return
-      }
-
       let totalPredictionsRecalculated = 0
 
-      // Recalculate each match
-      for (const match of matchesWithResults) {
+      // Recalculate each match (if any)
+      if (matchesWithResults && matchesWithResults.length > 0) {
+        for (const match of matchesWithResults) {
         const { data: predictions } = await supabase
           .from('predictions')
           .select('user_id, pred_home, pred_away')
@@ -433,6 +514,7 @@ function ResultsTab() {
           }
           totalPredictionsRecalculated += predictions.length
         }
+      }
       }
 
       // Load real group standings and teams for group order bonus calculation
@@ -521,7 +603,7 @@ function ResultsTab() {
         }
       }
 
-      alert(`✅ Recálculo completado!\n\n${matchesWithResults.length} partidos\n${totalPredictionsRecalculated} predicciones\n${allUsers?.length || 0} usuarios actualizados`)
+      alert(`✅ Recálculo completado!\n\n${matchesWithResults?.length || 0} partidos\n${totalPredictionsRecalculated} predicciones\n${allUsers?.length || 0} usuarios actualizados`)
       loadMatches()
     } catch (error) {
       console.error('Error:', error)

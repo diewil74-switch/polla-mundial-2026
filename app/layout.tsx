@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Albert_Sans } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 
-const albertSans = Albert_Sans({
-  variable: "--font-albert-sans",
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
 });
 
@@ -19,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${albertSans.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-sans bg-white text-slate-900">
+    <html lang="es" className={`${poppins.variable} theme-light h-full antialiased`}>
+      <body className="min-h-full flex flex-col bg-[#fbf1f0] text-[#1e2a44]" style={{ fontFamily: 'var(--font-poppins), system-ui, sans-serif' }}>
         {children}
       </body>
     </html>
