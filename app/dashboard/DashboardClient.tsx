@@ -2031,7 +2031,7 @@ function BracketMatchCard({
   const teamsAssigned = match.home_team_id && match.away_team_id
 
   const dateStr = matchDate.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
-  const cityStr = match.stadium || match.city || ''
+  const cityStr = match.venue || match.city || ''
 
   const hasChanges = predHome !== (prediction?.pred_home ?? 0) || predAway !== (prediction?.pred_away ?? 0)
 
@@ -2944,7 +2944,7 @@ function ResultadosTab() {
             </tr>
           </thead>
           <tbody>
-            {filteredPhases.map((phase) => {
+            {filteredPhases.map((phase: any) => {
             const phaseMatches = phase.matches
 
             // Calculate subtotals for this phase
