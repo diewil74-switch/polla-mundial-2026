@@ -721,6 +721,17 @@ td.p-cell { padding: 0; text-align: center; }
 @media (max-width: 1320px) {
   .nav button svg { display: none; }
 }
+/* Resultados table */
+.res-th-match { min-width: 220px; }
+.res-td-match { min-width: 220px; }
+
+@media (max-width: 760px) {
+  .res-th-match { min-width: 80px !important; width: 80px !important; }
+  .res-td-match { min-width: 80px !important; width: 80px !important; padding: 8px 6px !important; }
+  .res-match-name { display: none; }
+  .res-match-time { display: none; }
+}
+
 @media (max-width: 760px) {
   .topbar { gap: 10px; flex-wrap: wrap; }
   .nav { margin-left: 0; width: 100%; justify-content: flex-start; }

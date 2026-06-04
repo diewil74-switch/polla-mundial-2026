@@ -2918,9 +2918,9 @@ function ResultadosTab() {
       {/* Table */}
       <div className="overflow-x-auto bg-white rounded-xl shadow-sm border border-slate-200" style={{ marginTop: '1.5rem' }}>
         <table className="w-full">
-          <thead>
+          <thead className="sticky top-0 z-20">
             <tr className="border-b border-slate-200 bg-slate-50">
-              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide sticky left-0 bg-slate-50 z-10">
+              <th className="res-th-match px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide sticky left-0 bg-slate-50 z-30">
                 Partido
               </th>
               {sortedUsers.map((user: any, idx: number) => (
@@ -2936,7 +2936,7 @@ function ResultadosTab() {
               ))}
             </tr>
             <tr className="border-b border-slate-200 bg-slate-50">
-              <th className="px-4 py-1.5 sticky left-0 bg-slate-50 z-10"></th>
+              <th className="res-th-match px-4 py-1.5 sticky left-0 bg-slate-50 z-30"></th>
               {sortedUsers.map((user: any) => (
                 <React.Fragment key={user.id}>
                   <th className="px-1 py-1.5 text-center border-l border-slate-100 text-[10px] font-semibold text-slate-500 uppercase">MARC.</th>
@@ -3004,19 +3004,17 @@ function ResultadosTab() {
 
                   return (
                     <tr key={match.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-3 sticky left-0 bg-white z-10">
-                        <div className="flex items-center gap-3">
-                          <div className="text-xs text-slate-400 font-mono">
-                            {matchTime}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg">{homeFlagEmoji}</span>
-                            <span className="font-medium text-sm text-slate-700">{homeTeamDisplay}</span>
+                      <td className="res-td-match px-4 py-3 sticky left-0 bg-white z-10">
+                        <div className="flex items-center gap-2">
+                          <div className="res-match-time text-xs text-slate-400 font-mono">{matchTime}</div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-base">{homeFlagEmoji}</span>
+                            <span className="res-match-name font-medium text-sm text-slate-700">{homeTeamDisplay}</span>
                           </div>
                           <div className="text-xs text-slate-400">vs</div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg">{awayFlagEmoji}</span>
-                            <span className="font-medium text-sm text-slate-700">{awayTeamDisplay}</span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-base">{awayFlagEmoji}</span>
+                            <span className="res-match-name font-medium text-sm text-slate-700">{awayTeamDisplay}</span>
                           </div>
                         </div>
                       </td>
