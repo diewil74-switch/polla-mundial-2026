@@ -274,8 +274,13 @@ export default function RegisterPage() {
           </div>
 
           <div className="mt-4 text-center">
-            <Link href="/rules" className="text-sm text-slate-500 hover:text-slate-700">
-              Ver reglas de puntuación
+            <Link
+              href="/rules"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 w-full justify-center py-3 px-4 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium text-sm transition-colors"
+            >
+              📋 Ver reglas de puntuación
             </Link>
           </div>
         </div>
