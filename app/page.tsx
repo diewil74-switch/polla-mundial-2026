@@ -45,10 +45,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-slate-800 mb-2">
-            <span className="inline-block mr-2">⚽</span>
-            Polla Mundial 2026
-          </h1>
+          <img src="/tournaments_fifa-world-cup-2026_3000x3000.football-logos.cc.png" alt="FIFA World Cup 2026" className="mx-auto mb-3" style={{ width: 80, height: 80, objectFit: 'contain' }} />
+          <h1 className="text-4xl font-bold text-slate-800 mb-2">Polla Mundial 2026</h1>
           <p className="text-slate-600">Inicia sesión para participar</p>
         </div>
 
