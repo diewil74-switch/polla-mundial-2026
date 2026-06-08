@@ -76,6 +76,25 @@ body {
 .empty-note { padding: 26px 18px; text-align: center; color: var(--muted); font-size: 13px; line-height: 1.5; }
 
 
+/* Botón guardar predicción — aparece al editar un marcador */
+.btn-save-pred {
+  appearance: none; cursor: pointer; font-family: var(--font-body);
+  font-weight: 700; font-size: 13px; white-space: nowrap;
+  color: #fff; background: var(--accent);
+  border: none; padding: 8px 14px; border-radius: 10px;
+  box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 55%, transparent);
+  animation: save-pulse 1.4s ease-in-out infinite;
+  transition: transform .1s, background .15s;
+}
+.btn-save-pred:hover { background: oklch(0.50 0.22 24); transform: scale(1.04); }
+.btn-save-pred:active { transform: scale(0.97); }
+.btn-save-pred:disabled { opacity: .6; cursor: not-allowed; animation: none; }
+@keyframes save-pulse {
+  0%   { box-shadow: 0 0 0 0   color-mix(in oklab, var(--accent) 50%, transparent); }
+  60%  { box-shadow: 0 0 0 8px transparent; }
+  100% { box-shadow: 0 0 0 0   transparent; }
+}
+
 /* botones genéricos */
 .btn-ghost {
   appearance: none; cursor: pointer; font-family: var(--font-body); font-weight: 700; font-size: 13px;

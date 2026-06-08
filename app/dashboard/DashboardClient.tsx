@@ -842,10 +842,9 @@ function MatchPredictionCard({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="btn-primary"
-            style={{ fontSize: '0.85rem', padding: '6px 12px' }}
+            className="btn-save-pred"
           >
-            {saving ? 'Guardando...' : 'Guardar'}
+            {saving ? 'Guardando…' : '💾 Guardar'}
           </button>
         ) : (
           <span className="pc-time">🕑 {kickoffTime}</span>
