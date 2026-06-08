@@ -1274,23 +1274,18 @@ function UsersTab({ currentUserId }: { currentUserId: string }) {
       return
     }
 
-    // Delete user's predictions first
-    await supabase
-      .from('predictions')
-      .delete()
-      .eq('user_id', userId)
+    const res = await fetch('/api/admin/delete-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
+    })
 
-    // Delete user's special predictions
-    await supabase
-      .from('special_predictions')
-      .delete()
-      .eq('user_id', userId)
+    const data = await res.json()
 
-    // Delete profile
-    await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', userId)
+    if (!res.ok) {
+      alert(`Error al eliminar usuario: ${data.error}`)
+      return
+    }
 
     alert(`Usuario "${userName}" eliminado correctamente`)
     loadUsers()
