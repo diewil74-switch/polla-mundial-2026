@@ -3544,7 +3544,6 @@ function EstadisticasTab() {
                   count
                 }))
                 .sort((a, b) => b.count - a.count)
-                .slice(0, 5) // Top 5 scores
 
               const homeDisplay = homeTeam?.name || homeLabel || 'TBD'
               const awayDisplay = awayTeam?.name || awayLabel || 'TBD'
@@ -3563,15 +3562,16 @@ function EstadisticasTab() {
                       <span>{awayTeam?.flag_emoji || '🏴'}</span>
                     </div>
                   </div>
-                  <ResponsiveContainer width="100%" height={180}>
-                    <BarChart data={chartData}>
+                  <ResponsiveContainer width="100%" height={Math.max(160, chartData.length * 28)}>
+                    <BarChart data={chartData} barSize={Math.max(10, Math.min(28, 180 / chartData.length))}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis
                         dataKey="score"
-                        tick={{ fontSize: 10 }}
+                        tick={{ fontSize: chartData.length > 8 ? 8 : 10 }}
                         height={30}
+                        interval={0}
                       />
-                      <YAxis tick={{ fontSize: 10 }} allowDecimals={false} width={30} />
+                      <YAxis tick={{ fontSize: 10 }} allowDecimals={false} width={25} />
                       <Tooltip
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
