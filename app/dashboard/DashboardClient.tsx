@@ -801,7 +801,7 @@ function MatchPredictionCard({
     minute: '2-digit',
   })
 
-  const hasChanges = predHome !== (prediction?.pred_home ?? 0) || predAway !== (prediction?.pred_away ?? 0)
+  const hasChanges = !prediction || predHome !== prediction.pred_home || predAway !== prediction.pred_away
 
   const handleSave = async () => {
     setSaving(true)
@@ -2032,7 +2032,7 @@ function BracketMatchCard({
   const dateStr = matchDate.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
   const cityStr = match.venue || match.city || ''
 
-  const hasChanges = predHome !== (prediction?.pred_home ?? 0) || predAway !== (prediction?.pred_away ?? 0)
+  const hasChanges = !prediction || predHome !== prediction.pred_home || predAway !== prediction.pred_away
 
   const handleSave = async () => {
     if (!onSavePrediction) return
