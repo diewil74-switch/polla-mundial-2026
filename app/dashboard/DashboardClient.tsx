@@ -2078,7 +2078,7 @@ function BracketMatchCard({
 function SpecialTab({ userId }: { userId: string }) {
   const [teams, setTeams] = useState<Team[]>([])
   const [predictions, setPredictions] = useState<Record<string, SpecialPrediction>>({})
-  const [popularPicks, setPopularPicks] = useState<{ topScorer: any[], mvp: any[] }>({ topScorer: [], mvp: [] })
+  const [popularPicks, setPopularPicks] = useState<{ topScorer: any[], mvp: any[], champion: any[], runnerUp: any[], thirdPlace: any[] }>({ topScorer: [], mvp: [], champion: [], runnerUp: [], thirdPlace: [] })
   const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     champion: '',
@@ -2101,7 +2101,7 @@ function SpecialTab({ userId }: { userId: string }) {
     const [teamsRes, predsRes, allPredsRes] = await Promise.all([
       supabase.from('teams').select('*').order('name'),
       supabase.from('special_predictions').select('*').eq('user_id', userId),
-      supabase.from('special_predictions').select('*').in('type', ['top_scorer', 'mvp']),
+      supabase.from('special_predictions').select('*').in('type', ['top_scorer', 'mvp', 'champion', 'runner_up', 'third_place']),
     ])
 
     if (teamsRes.data) setTeams(teamsRes.data)
@@ -2112,67 +2112,62 @@ function SpecialTab({ userId }: { userId: string }) {
 
       const scorerPicks: any = {}
       const mvpPicks: any = {}
-      const scorerUsersByPlayer: any = {} // Track unique users per player for top scorer
-      const mvpUsersByPlayer: any = {} // Track unique users per player for MVP
+      const championPicks: any = {}
+      const runnerUpPicks: any = {}
+      const thirdPlacePicks: any = {}
+      const scorerUsersByPlayer: any = {}
+      const mvpUsersByPlayer: any = {}
+      const championUsersByTeam: any = {}
+      const runnerUpUsersByTeam: any = {}
+      const thirdPlaceUsersByTeam: any = {}
 
       allPredsRes.data.forEach((pred: any) => {
-        if (pred.type === 'top_scorer' && pred.value) {
+        if (!pred.value) return
+
+        const addToPicks = (picks: any, usersByKey: any, key: string) => {
+          if (!usersByKey[key]) usersByKey[key] = new Set()
+          usersByKey[key].add(pred.user_id)
+          picks[key] = usersByKey[key].size
+        }
+
+        if (pred.type === 'top_scorer') {
           try {
             const player = JSON.parse(pred.value)
-            // Normalize: lowercase, trim, and collapse multiple spaces
-            const firstName = player.first_name.trim().replace(/\s+/g, ' ').toLowerCase()
-            const lastName = player.last_name.trim().replace(/\s+/g, ' ').toLowerCase()
-            const country = player.country.trim()
-            const key = `${firstName} ${lastName}|${country}`
-
-            if (!scorerUsersByPlayer[key]) {
-              scorerUsersByPlayer[key] = new Set()
-            }
-            scorerUsersByPlayer[key].add(pred.user_id)
-            scorerPicks[key] = scorerUsersByPlayer[key].size
-            console.log('[SpecialTab] ⚽ Top Scorer:', key, '- Users:', scorerUsersByPlayer[key].size, '- User ID:', pred.user_id)
+            const normalize = (s: string) => s.trim().replace(/\s+/g, ' ').toLowerCase()
+            const key = `${normalize(player.first_name)} ${normalize(player.last_name)}|${player.country.trim()}`
+            addToPicks(scorerPicks, scorerUsersByPlayer, key)
           } catch (e) {}
-        } else if (pred.type === 'mvp' && pred.value) {
+        } else if (pred.type === 'mvp') {
           try {
             const player = JSON.parse(pred.value)
-            // Normalize: lowercase, trim, and collapse multiple spaces
-            const firstName = player.first_name.trim().replace(/\s+/g, ' ').toLowerCase()
-            const lastName = player.last_name.trim().replace(/\s+/g, ' ').toLowerCase()
-            const country = player.country.trim()
-            const key = `${firstName} ${lastName}|${country}`
-
-            if (!mvpUsersByPlayer[key]) {
-              mvpUsersByPlayer[key] = new Set()
-            }
-            mvpUsersByPlayer[key].add(pred.user_id)
-            mvpPicks[key] = mvpUsersByPlayer[key].size
-            console.log('[SpecialTab] 🏆 MVP:', key, '- Users:', mvpUsersByPlayer[key].size, '- User ID:', pred.user_id)
+            const normalize = (s: string) => s.trim().replace(/\s+/g, ' ').toLowerCase()
+            const key = `${normalize(player.first_name)} ${normalize(player.last_name)}|${player.country.trim()}`
+            addToPicks(mvpPicks, mvpUsersByPlayer, key)
           } catch (e) {}
+        } else if (pred.type === 'champion') {
+          addToPicks(championPicks, championUsersByTeam, pred.value.trim())
+        } else if (pred.type === 'runner_up') {
+          addToPicks(runnerUpPicks, runnerUpUsersByTeam, pred.value.trim())
+        } else if (pred.type === 'third_place') {
+          addToPicks(thirdPlacePicks, thirdPlaceUsersByTeam, pred.value.trim())
         }
       })
 
       const capitalize = (s: string) => s.replace(/\b\w/g, c => c.toUpperCase())
+      const toPlayerList = (picks: any) =>
+        Object.entries(picks).sort(([, a]: any, [, b]: any) => b - a)
+          .map(([key, count]) => { const [name, country] = key.split('|'); return { name: capitalize(name), country, count } })
+      const toTeamList = (picks: any) =>
+        Object.entries(picks).sort(([, a]: any, [, b]: any) => b - a)
+          .map(([name, count]) => ({ name, count }))
 
-      const topScorer = Object.entries(scorerPicks)
-        .sort(([, a]: any, [, b]: any) => b - a)
-        .slice(0, 4)
-        .map(([key, count]) => {
-          const [name, country] = key.split('|')
-          return { name: capitalize(name), country, count }
-        })
-
-      const mvp = Object.entries(mvpPicks)
-        .sort(([, a]: any, [, b]: any) => b - a)
-        .slice(0, 4)
-        .map(([key, count]) => {
-          const [name, country] = key.split('|')
-          return { name: capitalize(name), country, count }
-        })
-
-      console.log('[SpecialTab] 📋 Final top scorers:', topScorer)
-      console.log('[SpecialTab] 📋 Final MVPs:', mvp)
-
-      setPopularPicks({ topScorer, mvp })
+      setPopularPicks({
+        topScorer: toPlayerList(scorerPicks),
+        mvp: toPlayerList(mvpPicks),
+        champion: toTeamList(championPicks),
+        runnerUp: toTeamList(runnerUpPicks),
+        thirdPlace: toTeamList(thirdPlacePicks),
+      })
     }
 
     if (predsRes.data) {
@@ -2329,6 +2324,8 @@ function SpecialTab({ userId }: { userId: string }) {
               onSave={() => savePrediction('champion', formData.champion, knockoutStartDeadline.toISOString())}
               teams={teams}
               locked={knockoutStarted}
+              popularPicks={popularPicks.champion}
+              onPickSelect={(name) => setFormData({ ...formData, champion: name })}
             />
             <SpecialPredictionField
               label={`🥈 Subcampeón (${runnerUpPoints} pts)`}
@@ -2338,6 +2335,8 @@ function SpecialTab({ userId }: { userId: string }) {
               onSave={() => savePrediction('runner_up', formData.runner_up, knockoutStartDeadline.toISOString())}
               teams={teams}
               locked={knockoutStarted}
+              popularPicks={popularPicks.runnerUp}
+              onPickSelect={(name) => setFormData({ ...formData, runner_up: name })}
             />
             <SpecialPredictionField
               label={`🥉 Tercer Lugar (${thirdPlacePoints} pts)`}
@@ -2347,6 +2346,8 @@ function SpecialTab({ userId }: { userId: string }) {
               onSave={() => savePrediction('third_place', formData.third_place, knockoutStartDeadline.toISOString())}
               teams={teams}
               locked={knockoutStarted}
+              popularPicks={popularPicks.thirdPlace}
+              onPickSelect={(name) => setFormData({ ...formData, third_place: name })}
             />
           </div>
         </div>
@@ -2579,6 +2580,8 @@ function SpecialPredictionField({
   onSave,
   teams,
   locked,
+  popularPicks = [],
+  onPickSelect,
 }: {
   label: string
   type: string
@@ -2587,6 +2590,8 @@ function SpecialPredictionField({
   onSave: () => void
   teams: Team[]
   locked: boolean
+  popularPicks?: { name: string; count: number }[]
+  onPickSelect?: (name: string) => void
 }) {
   return (
     <div>
@@ -2613,6 +2618,21 @@ function SpecialPredictionField({
           Guardar
         </button>
       </div>
+      {popularPicks.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {popularPicks.map((pick, idx) => (
+            <button
+              key={idx}
+              onClick={() => onPickSelect?.(pick.name)}
+              disabled={locked}
+              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-full text-xs disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <span className="font-semibold text-slate-800">{pick.name}</span>
+              <span className="text-slate-400 ml-1">·{pick.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
       {locked && (
         <p className="text-xs text-red-600 mt-1">Predicción bloqueada (deadline pasado)</p>
       )}
