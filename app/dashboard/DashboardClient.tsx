@@ -2080,6 +2080,8 @@ function SpecialTab({ userId }: { userId: string }) {
   const [predictions, setPredictions] = useState<Record<string, SpecialPrediction>>({})
   const [popularPicks, setPopularPicks] = useState<{ topScorer: any[], mvp: any[], champion: any[], runnerUp: any[], thirdPlace: any[] }>({ topScorer: [], mvp: [], champion: [], runnerUp: [], thirdPlace: [] })
   const [loading, setLoading] = useState(true)
+  const [savingType, setSavingType] = useState<string | null>(null)
+  const [savedType, setSavedType] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     champion: '',
     runner_up: '',
@@ -2215,7 +2217,8 @@ function SpecialTab({ userId }: { userId: string }) {
   }
 
   async function savePrediction(type: string, value: string, deadline: string) {
-    console.log(`[SpecialTab] 💾 Guardando ${type}:`, value)
+    setSavingType(type)
+    setSavedType(null)
 
     // First, check if prediction exists
     const { data: existing, error: checkError } = await supabase
@@ -2254,11 +2257,12 @@ function SpecialTab({ userId }: { userId: string }) {
         .select()
     }
 
+    setSavingType(null)
     if (result.error) {
-      console.error('❌ Error guardando predicción especial:', result.error)
       alert('Error al guardar predicción: ' + result.error.message)
     } else {
-      console.log('✅ Predicción guardada exitosamente:', result.data)
+      setSavedType(type)
+      setTimeout(() => setSavedType(null), 2000)
       await loadData()
     }
   }
@@ -2326,6 +2330,8 @@ function SpecialTab({ userId }: { userId: string }) {
               locked={knockoutStarted}
               popularPicks={popularPicks.champion}
               onPickSelect={(name) => setFormData({ ...formData, champion: name })}
+              saving={savingType === 'champion'}
+              saved={savedType === 'champion'}
             />
             <SpecialPredictionField
               label={`🥈 Subcampeón (${runnerUpPoints} pts)`}
@@ -2337,6 +2343,8 @@ function SpecialTab({ userId }: { userId: string }) {
               locked={knockoutStarted}
               popularPicks={popularPicks.runnerUp}
               onPickSelect={(name) => setFormData({ ...formData, runner_up: name })}
+              saving={savingType === 'runner_up'}
+              saved={savedType === 'runner_up'}
             />
             <SpecialPredictionField
               label={`🥉 Tercer Lugar (${thirdPlacePoints} pts)`}
@@ -2348,6 +2356,8 @@ function SpecialTab({ userId }: { userId: string }) {
               locked={knockoutStarted}
               popularPicks={popularPicks.thirdPlace}
               onPickSelect={(name) => setFormData({ ...formData, third_place: name })}
+              saving={savingType === 'third_place'}
+              saved={savedType === 'third_place'}
             />
           </div>
         </div>
@@ -2453,10 +2463,15 @@ function SpecialTab({ userId }: { userId: string }) {
                 })
                 savePrediction('top_scorer', playerData, firstMatchDeadline.toISOString())
               }}
-              disabled={firstMatchPassed || !formData.top_scorer_first_name || !formData.top_scorer_last_name || !formData.top_scorer_country}
-              className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              disabled={firstMatchPassed || !formData.top_scorer_first_name || !formData.top_scorer_last_name || !formData.top_scorer_country || savingType === 'top_scorer'}
+              style={{
+                width: '100%', border: 'none', padding: '8px 16px', borderRadius: 8,
+                fontWeight: 700, fontSize: 14, cursor: 'pointer', transition: 'background 0.3s',
+                background: savedType === 'top_scorer' ? '#16a34a' : '#dc2626', color: '#fff',
+                opacity: firstMatchPassed || !formData.top_scorer_first_name || !formData.top_scorer_last_name || !formData.top_scorer_country ? 0.5 : 1,
+              }}
             >
-              Guardar Goleador
+              {savingType === 'top_scorer' ? '⏳ Guardando…' : savedType === 'top_scorer' ? '✅ Guardado' : 'Guardar Goleador'}
             </button>
           </div>
         </div>
@@ -2559,10 +2574,15 @@ function SpecialTab({ userId }: { userId: string }) {
                 })
                 savePrediction('mvp', playerData, firstMatchDeadline.toISOString())
               }}
-              disabled={firstMatchPassed || !formData.mvp_first_name || !formData.mvp_last_name || !formData.mvp_country}
-              className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              disabled={firstMatchPassed || !formData.mvp_first_name || !formData.mvp_last_name || !formData.mvp_country || savingType === 'mvp'}
+              style={{
+                width: '100%', border: 'none', padding: '8px 16px', borderRadius: 8,
+                fontWeight: 700, fontSize: 14, cursor: 'pointer', transition: 'background 0.3s',
+                background: savedType === 'mvp' ? '#16a34a' : '#dc2626', color: '#fff',
+                opacity: firstMatchPassed || !formData.mvp_first_name || !formData.mvp_last_name || !formData.mvp_country ? 0.5 : 1,
+              }}
             >
-              Guardar MVP
+              {savingType === 'mvp' ? '⏳ Guardando…' : savedType === 'mvp' ? '✅ Guardado' : 'Guardar MVP'}
             </button>
           </div>
           </div>
@@ -2582,6 +2602,8 @@ function SpecialPredictionField({
   locked,
   popularPicks = [],
   onPickSelect,
+  saving = false,
+  saved = false,
 }: {
   label: string
   type: string
@@ -2592,6 +2614,8 @@ function SpecialPredictionField({
   locked: boolean
   popularPicks?: { name: string; count: number }[]
   onPickSelect?: (name: string) => void
+  saving?: boolean
+  saved?: boolean
 }) {
   return (
     <div>
@@ -2612,10 +2636,22 @@ function SpecialPredictionField({
         </select>
         <button
           onClick={onSave}
-          disabled={locked || !value}
-          className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={locked || !value || saving}
+          style={{
+            background: saved ? '#16a34a' : '#dc2626',
+            color: '#fff',
+            border: 'none',
+            padding: '8px 20px',
+            borderRadius: 8,
+            fontWeight: 700,
+            fontSize: 14,
+            cursor: locked || !value || saving ? 'not-allowed' : 'pointer',
+            minWidth: 100,
+            transition: 'background 0.3s',
+            opacity: locked || !value ? 0.5 : 1,
+          }}
         >
-          Guardar
+          {saving ? '⏳ Guardando…' : saved ? '✅ Guardado' : 'Guardar'}
         </button>
       </div>
       {popularPicks.length > 0 && (
