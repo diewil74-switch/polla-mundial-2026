@@ -1141,6 +1141,7 @@ function GroupsTab({ userId }: { userId: string }) {
   const [realStandings, setRealStandings] = useState<any[]>([])
   const [positionPredictions, setPositionPredictions] = useState<any[]>([])
   const [completedGroupMatches, setCompletedGroupMatches] = useState<any[]>([])
+  const [groupFirstMatchDates, setGroupFirstMatchDates] = useState<Record<string, Date>>({})
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
@@ -1149,7 +1150,7 @@ function GroupsTab({ userId }: { userId: string }) {
   }, [userId])
 
   async function loadData() {
-    const [teamsRes, predictionsRes, standingsRes, positionPredsRes, completedMatchesRes] = await Promise.all([
+    const [teamsRes, predictionsRes, standingsRes, positionPredsRes, completedMatchesRes, firstMatchesRes] = await Promise.all([
       supabase.from('teams').select('*').order('group_id'),
       supabase
         .from('predictions')
@@ -1182,6 +1183,11 @@ function GroupsTab({ userId }: { userId: string }) {
         .eq('phase', 'groups')
         .not('home_score', 'is', null)
         .not('away_score', 'is', null),
+      supabase
+        .from('matches')
+        .select('group_id, match_date')
+        .eq('phase', 'groups')
+        .order('match_date', { ascending: true }),
     ])
 
     if (teamsRes.data) setTeams(teamsRes.data)
@@ -1203,6 +1209,16 @@ function GroupsTab({ userId }: { userId: string }) {
     }
     if (standingsRes.data) setRealStandings(standingsRes.data)
     if (positionPredsRes.data) setPositionPredictions(positionPredsRes.data)
+    if (firstMatchesRes.data) {
+      const firstDates: Record<string, Date> = {}
+      firstMatchesRes.data.forEach((m: any) => {
+        if (m.group_id && !firstDates[m.group_id]) {
+          firstDates[m.group_id] = new Date(m.match_date)
+        }
+      })
+      setGroupFirstMatchDates(firstDates)
+    }
+
     if (completedMatchesRes.data) {
       setCompletedGroupMatches(completedMatchesRes.data)
       console.log('=== PARTIDOS COMPLETOS CARGADOS ===')
@@ -1286,6 +1302,7 @@ function GroupsTab({ userId }: { userId: string }) {
             positionPredictions={positionPredictions}
             completedGroupMatches={completedGroupMatches}
             onSavePosition={savePositionPrediction}
+            firstMatchDate={groupFirstMatchDates[group]}
           />
         ))}
       </div>
@@ -1301,6 +1318,7 @@ function GroupTable({
   positionPredictions,
   completedGroupMatches,
   onSavePosition,
+  firstMatchDate,
 }: {
   group: string
   teams: Team[]
@@ -1309,6 +1327,7 @@ function GroupTable({
   positionPredictions: any[]
   completedGroupMatches: any[]
   onSavePosition: (groupId: string, teamId: number, position: number | null) => void
+  firstMatchDate?: Date
 }) {
   const groupTeams = teams.filter((t) => t.group_id === group)
 
@@ -1353,9 +1372,8 @@ function GroupTable({
     return b.gf - a.gf
   })
 
-  // Check deadline: 11 de junio 2026, 11pm Colombia (UTC-5)
-  const deadline = new Date('2026-06-11T23:00:00-05:00')
-  const isLocked = new Date() >= deadline
+  // Lock when first match of this group starts
+  const isLocked = firstMatchDate ? new Date() >= firstMatchDate : false
 
   // Check if user earned group order bonus (all 4 positions must match and all 6 matches complete)
   const groupRealStandings = realStandings.filter((s: any) => s.group_id === group)
