@@ -1373,7 +1373,7 @@ function GroupTable({
   })
 
   // Lock when first match of this group starts
-  const isLocked = firstMatchDate ? new Date() >= firstMatchDate : false
+  const isLocked = firstMatchDate ? new Date() >= new Date(firstMatchDate.getTime() - 15 * 60 * 1000) : false
 
   // Check if user earned group order bonus (all 4 positions must match and all 6 matches complete)
   const groupRealStandings = realStandings.filter((s: any) => s.group_id === group)
@@ -2292,7 +2292,8 @@ function SpecialTab({ userId }: { userId: string }) {
   const knockoutStartDeadline = new Date('2026-06-28T00:00:00-05:00') // 28 junio, inicio ronda de 32
 
   const now = new Date()
-  const firstMatchPassed = now >= firstMatchDeadline
+  // Goleador y MVP: bloquear 15 min antes del primer partido
+  const firstMatchPassed = now >= new Date(firstMatchDeadline.getTime() - 15 * 60 * 1000)
   const knockoutStarted = now >= knockoutStartDeadline
 
   // Progressive points values based on when prediction is made
