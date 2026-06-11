@@ -2734,11 +2734,17 @@ function ResultadosTab({ currentUserId }: { currentUserId: string }) {
         `)
         .order('match_number')
 
-      // Load all predictions (limit 10000 para cubrir 30 usuarios × 104 partidos)
-      const { data: predictions } = await supabase
-        .from('predictions')
-        .select('user_id, match_id, pred_home, pred_away, points_earned')
-        .limit(10000)
+      // Paginar predicciones (Supabase limita a 1000 por página)
+      let predictions: any[] = []
+      for (let page = 0; page < 10; page++) {
+        const { data: batch } = await supabase
+          .from('predictions')
+          .select('user_id, match_id, pred_home, pred_away, points_earned')
+          .range(page * 1000, (page + 1) * 1000 - 1)
+        if (!batch || batch.length === 0) break
+        predictions = predictions.concat(batch)
+        if (batch.length < 1000) break
+      }
 
       if (!users || !matches || !predictions) {
         setLoading(false)
