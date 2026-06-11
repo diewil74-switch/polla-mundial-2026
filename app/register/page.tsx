@@ -29,7 +29,7 @@ export default function RegisterPage() {
 
     if (count !== null) {
       setUserCount(count)
-      if (count >= 20) {
+      if (count >= 30) {
         setRegistrationClosed(true)
       }
     }
