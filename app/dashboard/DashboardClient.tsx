@@ -3105,8 +3105,12 @@ function ResultadosTab({ currentUserId }: { currentUserId: string }) {
                         return (
                           <React.Fragment key={user.id}>
                             <td className={`px-1 py-3 text-center border-l ${isMe ? 'bg-red-50 border-red-200' : 'border-slate-100'}`}>
-                              {pred && isPredictionVisible ? (
-                                <span className={`text-xs font-mono ${isMe ? 'text-red-700 font-bold' : 'text-slate-600'}`}>{pred.pred_home}-{pred.pred_away}</span>
+                              {isPredictionVisible ? (
+                                pred ? (
+                                  <span className={`text-xs font-mono ${isMe ? 'text-red-700 font-bold' : 'text-slate-600'}`}>{pred.pred_home}-{pred.pred_away}</span>
+                                ) : (
+                                  <span className="text-xs text-slate-300">—</span>
+                                )
                               ) : (
                                 <span className="text-slate-300 text-sm">🔒</span>
                               )}
