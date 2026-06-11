@@ -737,9 +737,9 @@ function PredictionsTab({ userId, currentProfile }: { userId: string; currentPro
             <div className="pred-list">
               {filteredMatches.map((match) => {
                 const prediction = predictions[match.id]
-                const hasStarted = new Date() >= new Date(match.match_date)
+                const fifteenMinBefore = new Date(new Date(match.match_date).getTime() - 15 * 60 * 1000)
                 const hasResult = match.home_score !== null && match.away_score !== null
-                const canEdit = !hasStarted
+                const canEdit = new Date() < fifteenMinBefore
                 const pts = prediction?.points_earned || 0
 
                 return (
