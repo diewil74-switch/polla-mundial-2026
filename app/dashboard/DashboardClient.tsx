@@ -2734,10 +2734,11 @@ function ResultadosTab({ currentUserId }: { currentUserId: string }) {
         `)
         .order('match_number')
 
-      // Load all predictions
+      // Load all predictions (limit 10000 para cubrir 30 usuarios × 104 partidos)
       const { data: predictions } = await supabase
         .from('predictions')
         .select('user_id, match_id, pred_home, pred_away, points_earned')
+        .limit(10000)
 
       if (!users || !matches || !predictions) {
         setLoading(false)
