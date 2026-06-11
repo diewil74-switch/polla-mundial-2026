@@ -2288,23 +2288,22 @@ function SpecialTab({ userId }: { userId: string }) {
   if (loading) return <div className="text-center py-12">Cargando...</div>
 
   // Deadlines en Colombia timezone
-  const firstMatchDeadline = new Date('2026-06-11T14:00:00-05:00') // 11 junio, 2pm Colombia
-  const knockoutStartDeadline = new Date('2026-06-28T00:00:00-05:00') // 28 junio, inicio ronda de 32
+  const firstMatchDeadline = new Date('2026-06-11T14:00:00-05:00') // 11 jun, 2pm — MVP y goleador
+  const teamPredDeadline = new Date('2026-06-11T23:59:59-05:00')   // 11 jun, fin del día — campeón/sub/tercero
+  const knockoutStartDeadline = new Date('2026-06-28T00:00:00-05:00') // 28 jun, inicio eliminatorias
 
   const now = new Date()
   // Goleador y MVP: bloquear 15 min antes del primer partido
   const firstMatchPassed = now >= new Date(firstMatchDeadline.getTime() - 15 * 60 * 1000)
+  // Campeón/Sub/Tercero: puntos completos hasta fin del 11 jun
+  const teamPredPassed = now >= teamPredDeadline
   const knockoutStarted = now >= knockoutStartDeadline
 
-  // Progressive points values based on when prediction is made
-  // Before tournament (before 11 jun 2pm): Full points
-  // Before knockouts (11 jun - 28 jun): Reduced podium points, scorer/MVP locked
-  // After knockouts (after 28 jun): All locked
-  const championPoints = !firstMatchPassed ? 20 : !knockoutStarted ? 10 : 0
-  const runnerUpPoints = !firstMatchPassed ? 12 : !knockoutStarted ? 6 : 0
-  const thirdPlacePoints = !firstMatchPassed ? 12 : !knockoutStarted ? 6 : 0
-  const scorerPoints = !firstMatchPassed ? 10 : 0 // Locked after tournament starts
-  const mvpPoints = !firstMatchPassed ? 10 : 0 // Locked after tournament starts
+  const championPoints = !teamPredPassed ? 20 : !knockoutStarted ? 10 : 0
+  const runnerUpPoints = !teamPredPassed ? 12 : !knockoutStarted ? 6 : 0
+  const thirdPlacePoints = !teamPredPassed ? 12 : !knockoutStarted ? 6 : 0
+  const scorerPoints = !firstMatchPassed ? 10 : 0
+  const mvpPoints = !firstMatchPassed ? 10 : 0
 
   return (
     <div>

@@ -1919,8 +1919,9 @@ function SpecialsTab() {
       const updates: any[] = []
 
       // Define deadlines for progressive point system (Colombia timezone)
-      const firstMatchDeadline = new Date('2026-06-11T14:00:00-05:00') // 11 jun, 2pm Colombia
-      const knockoutStartDeadline = new Date('2026-06-28T00:00:00-05:00') // 28 jun, inicio ronda de 32
+      const firstMatchDeadline = new Date('2026-06-11T14:00:00-05:00') // 11 jun, 2pm Colombia — para MVP y goleador
+      const teamPredDeadline = new Date('2026-06-11T23:59:59-05:00')   // 11 jun, fin del día — para campeón/sub/tercero
+      const knockoutStartDeadline = new Date('2026-06-28T00:00:00-05:00') // 28 jun, inicio eliminatorias
 
       for (const [userId, predictions] of userPredictions.entries()) {
         let championPoints = 0
@@ -1930,22 +1931,22 @@ function SpecialsTab() {
         let topScorerPoints = 0
 
         predictions.forEach((pred) => {
-          // Determine points based on when prediction was created
           const predictionTime = new Date(pred.created_at)
-          const beforeTournament = predictionTime < firstMatchDeadline
-          const beforeKnockouts = predictionTime < knockoutStartDeadline
+          const beforeTeamDeadline = predictionTime < teamPredDeadline     // puntos completos campeón/sub/tercero
+          const beforeKnockouts = predictionTime < knockoutStartDeadline   // mitad de puntos
+          const beforeTournament = predictionTime < firstMatchDeadline     // puntos completos MVP/goleador
 
           if (pred.type === 'champion' && pred.value === actualResults.champion && actualResults.champion) {
-            // Champion: 20pts before tournament, 10pts before knockouts
-            championPoints = beforeTournament ? 20 : beforeKnockouts ? 10 : 0
+            // Campeón: 20pts hasta fin del 11 jun, 10pts hasta knockouts
+            championPoints = beforeTeamDeadline ? 20 : beforeKnockouts ? 10 : 0
           } else if (pred.type === 'runner_up' && pred.value === actualResults.runner_up && actualResults.runner_up) {
-            // Runner-up: 12pts before tournament, 6pts before knockouts
-            runnerUpPoints = beforeTournament ? 12 : beforeKnockouts ? 6 : 0
+            // Subcampeón: 12pts hasta fin del 11 jun, 6pts hasta knockouts
+            runnerUpPoints = beforeTeamDeadline ? 12 : beforeKnockouts ? 6 : 0
           } else if (pred.type === 'third_place' && pred.value === actualResults.third_place && actualResults.third_place) {
-            // Third place: 12pts before tournament, 6pts before knockouts
-            thirdPlacePoints = beforeTournament ? 12 : beforeKnockouts ? 6 : 0
+            // Tercer lugar: 12pts hasta fin del 11 jun, 6pts hasta knockouts
+            thirdPlacePoints = beforeTeamDeadline ? 12 : beforeKnockouts ? 6 : 0
           } else if (pred.type === 'mvp' && actualResults.mvp_first_name && actualResults.mvp_last_name) {
-            // MVP: 10pts before tournament only, locked after
+            // MVP: 10pts antes del primer partido, 0 después
             if (beforeTournament) {
               try {
                 const mvpPred = JSON.parse(pred.value)
