@@ -1931,7 +1931,7 @@ function SpecialsTab() {
         let topScorerPoints = 0
 
         predictions.forEach((pred) => {
-          const predictionTime = new Date(pred.created_at)
+          const predictionTime = new Date(pred.updated_at || pred.created_at)
           const beforeTeamDeadline = predictionTime < teamPredDeadline     // puntos completos campeón/sub/tercero
           const beforeKnockouts = predictionTime < knockoutStartDeadline   // mitad de puntos
           const beforeTournament = predictionTime < firstMatchDeadline     // puntos completos MVP/goleador

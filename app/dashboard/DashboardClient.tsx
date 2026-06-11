@@ -3201,7 +3201,7 @@ function EstadisticasTab() {
       // Get all predictions with their IDs and updated_at to filter latest per user-type
       const { data: specialPreds } = await supabase
         .from('special_predictions')
-        .select('id, type, value, user_id, updated_at')
+        .select('id, type, value, user_id, updated_at, created_at')
         .order('updated_at', { ascending: false })
 
       // Load all predictions with match info to get most picked scores
@@ -3564,6 +3564,77 @@ function EstadisticasTab() {
           )
         })}
       </div>
+
+      {/* Tabla de puntos especiales por usuario */}
+      {(() => {
+        const teamPredDeadline = new Date('2026-06-11T23:59:59-05:00')
+        const knockoutDeadline = new Date('2026-06-28T00:00:00-05:00')
+        const allUsers = data.allUsers || []
+
+        const getLatestPred = (userId: string, type: string) =>
+          data.specialPreds?.filter((p: any) => p.user_id === userId && p.type === type)
+            .sort((a: any, b: any) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0]
+
+        const getPotentialPts = (pred: any, fullPts: number) => {
+          if (!pred) return null
+          const savedAt = new Date(pred.updated_at || pred.created_at)
+          if (savedAt < teamPredDeadline) return fullPts
+          if (savedAt < knockoutDeadline) return fullPts / 2
+          return 0
+        }
+
+        const rows = [
+          { type: 'champion',    label: '🥇 Campeón',    fullPts: 20 },
+          { type: 'runner_up',   label: '🥈 Subcampeón', fullPts: 12 },
+          { type: 'third_place', label: '🥉 Tercer Lugar', fullPts: 12 },
+        ]
+
+        return (
+          <div className="bg-white rounded-xl border border-slate-200 p-6" style={{ marginTop: '1.5rem' }}>
+            <h3 className="text-lg font-semibold text-slate-900 mb-1">Predicciones especiales de equipos</h3>
+            <p className="text-sm text-slate-600 mb-4">Puntos potenciales por campeón, subcampeón y tercer lugar</p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <th className="text-left px-3 py-2 font-semibold text-slate-600 sticky left-0 bg-slate-50">Predicción</th>
+                    {allUsers.map((u: any) => (
+                      <th key={u.id} className="px-2 py-2 text-center font-semibold text-slate-600 whitespace-nowrap">{u.display_name}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(({ type, label, fullPts }) => (
+                    <tr key={type} className="border-b border-slate-100">
+                      <td className="px-3 py-2 font-medium text-slate-700 sticky left-0 bg-white whitespace-nowrap">{label}</td>
+                      {allUsers.map((u: any) => {
+                        const pred = getLatestPred(u.id, type)
+                        const pts = getPotentialPts(pred, fullPts)
+                        const isReduced = pred && pts !== null && pts < fullPts && pts > 0
+                        return (
+                          <td key={u.id} className="px-2 py-2 text-center">
+                            {pred ? (
+                              <div className="flex flex-col items-center gap-0.5">
+                                <span className="text-xs text-slate-700 leading-tight">{pred.value}</span>
+                                <span className={`text-xs font-bold ${isReduced ? 'text-amber-600' : 'text-green-700'}`}>
+                                  {pts} pts
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-slate-300 text-xs">—</span>
+                            )}
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs text-slate-400 mt-3">🟡 Amarillo = puntos reducidos por edición posterior al 11 jun</p>
+          </div>
+        )
+      })()}
 
       {/* Line Chart - Points Evolution by Jornada */}
       {(() => {
