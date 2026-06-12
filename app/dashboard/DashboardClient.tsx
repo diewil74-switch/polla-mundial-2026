@@ -3202,7 +3202,7 @@ const LINE_COLORS = ['#dc2626','#2563eb','#16a34a','#d97706','#7c3aed','#db2777'
   '#15803d','#b45309','#6d28d9','#be185d','#0369a1','#047857','#92400e','#5b21b6']
 
 function EvolutionChart({ allUsers, latestPreds }: { allUsers: any[], latestPreds: Record<string, any> }) {
-  const [activeUser, setActiveUser] = React.useState<string | null>(null)
+  const [hoveredValue, setHoveredValue] = React.useState<number | null>(null)
 
   const flatPreds = Object.values(latestPreds)
   const dateMap: Record<string, any[]> = {}
@@ -3251,18 +3251,20 @@ function EvolutionChart({ allUsers, latestPreds }: { allUsers: any[], latestPred
             <Tooltip
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null
-                const entry = activeUser
-                  ? payload.find((p: any) => p.dataKey === activeUser)
-                  : null
-                if (!entry) return null
+                // Mostrar solo usuarios con el valor exacto del punto señalado
+                const filtered = hoveredValue !== null
+                  ? payload.filter((p: any) => p.value === hoveredValue)
+                  : payload
+                if (!filtered.length) return null
                 return (
-                  <div style={{ background: '#fff', border: `1px solid ${entry.stroke}`, borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
-                    <p style={{ fontWeight: 700, color: '#1e2a44', marginBottom: 4 }}>{label}</p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ width: 10, height: 10, borderRadius: '50%', background: entry.stroke as string, flexShrink: 0 }} />
-                      <span style={{ color: '#374151' }}>{String(entry.dataKey)}</span>
-                      <span style={{ fontWeight: 700, color: entry.stroke as string, marginLeft: 4 }}>{entry.value} pts</span>
-                    </div>
+                  <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, padding: '8px 12px', fontSize: 12 }}>
+                    <p style={{ fontWeight: 700, color: '#1e2a44', marginBottom: 6 }}>{label} · {filtered[0].value} pts</p>
+                    {filtered.map((entry: any) => (
+                      <div key={entry.dataKey} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                        <span style={{ width: 9, height: 9, borderRadius: '50%', background: entry.stroke, flexShrink: 0 }} />
+                        <span style={{ color: '#374151' }}>{String(entry.dataKey)}</span>
+                      </div>
+                    ))}
                   </div>
                 )
               }}
@@ -3273,12 +3275,13 @@ function EvolutionChart({ allUsers, latestPreds }: { allUsers: any[], latestPred
                 type="monotone"
                 dataKey={user.display_name}
                 stroke={LINE_COLORS[idx % LINE_COLORS.length]}
-                strokeWidth={activeUser === user.display_name ? 3 : activeUser ? 1 : 2}
-                strokeOpacity={activeUser && activeUser !== user.display_name ? 0.2 : 1}
-                dot={{ r: 2 }}
-                activeDot={{ r: 5 }}
-                onMouseEnter={() => setActiveUser(user.display_name)}
-                onMouseLeave={() => setActiveUser(null)}
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                activeDot={{
+                  r: 6,
+                  onMouseOver: (_: any, payload: any) => setHoveredValue(payload?.value ?? null),
+                  onMouseOut: () => setHoveredValue(null),
+                }}
               />
             ))}
           </LineChart>
