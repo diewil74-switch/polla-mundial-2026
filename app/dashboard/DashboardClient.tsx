@@ -3197,6 +3197,97 @@ function ResultadosTab({ currentUserId }: { currentUserId: string }) {
 // ESTADÍSTICAS TAB
 // ============================================
 
+const LINE_COLORS = ['#dc2626','#2563eb','#16a34a','#d97706','#7c3aed','#db2777','#0891b2','#65a30d',
+  '#ea580c','#4f46e5','#0d9488','#c026d3','#ca8a04','#9333ea','#e11d48','#0284c7',
+  '#15803d','#b45309','#6d28d9','#be185d','#0369a1','#047857','#92400e','#5b21b6']
+
+function EvolutionChart({ allUsers, latestPreds }: { allUsers: any[], latestPreds: Record<string, any> }) {
+  const [activeUser, setActiveUser] = React.useState<string | null>(null)
+
+  const flatPreds = Object.values(latestPreds)
+  const dateMap: Record<string, any[]> = {}
+  flatPreds.forEach((p: any) => {
+    if (!p.match?.match_date || !p.calculated) return
+    const dateKey = new Date(p.match.match_date).toLocaleDateString('es-CO', {
+      timeZone: 'America/Bogota', day: 'numeric', month: 'short'
+    })
+    if (!dateMap[dateKey]) dateMap[dateKey] = []
+    dateMap[dateKey].push(p)
+  })
+
+  const sortedDates = Object.keys(dateMap).sort((a, b) =>
+    new Date(dateMap[a][0].match.match_date).getTime() - new Date(dateMap[b][0].match.match_date).getTime()
+  )
+
+  const cumulative: Record<string, number> = {}
+  allUsers.forEach((u: any) => { cumulative[u.display_name] = 0 })
+
+  const evolutionData = sortedDates.map(dateKey => {
+    const row: any = { fecha: dateKey }
+    allUsers.forEach((user: any) => {
+      const pts = dateMap[dateKey]
+        .filter((p: any) => p.user_id === user.id)
+        .reduce((sum: number, p: any) => sum + (p.points_earned || 0), 0)
+      cumulative[user.display_name] = (cumulative[user.display_name] || 0) + pts
+      row[user.display_name] = cumulative[user.display_name]
+    })
+    return row
+  })
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 p-6" style={{ marginTop: '1.5rem' }}>
+      <h3 className="text-lg font-semibold text-slate-900 mb-1">Evolución de puntos por fecha</h3>
+      <p className="text-sm text-slate-600 mb-4">Puntaje acumulado de cada participante — {allUsers.length} jugadores</p>
+      {evolutionData.length === 0 ? (
+        <div className="text-center text-sm text-slate-400 py-10">
+          Aún no hay partidos jugados. La gráfica mostrará la evolución apenas se carguen resultados.
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={420}>
+          <LineChart data={evolutionData} margin={{ top: 8, right: 24, bottom: 24, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+            <XAxis dataKey="fecha" tick={{ fontSize: 10 }} interval={0} angle={-45} textAnchor="end" height={50} />
+            <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={30} />
+            <Tooltip
+              content={({ active, payload, label }) => {
+                if (!active || !payload?.length) return null
+                const entry = activeUser
+                  ? payload.find((p: any) => p.dataKey === activeUser)
+                  : null
+                if (!entry) return null
+                return (
+                  <div style={{ background: '#fff', border: `1px solid ${entry.stroke}`, borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
+                    <p style={{ fontWeight: 700, color: '#1e2a44', marginBottom: 4 }}>{label}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: '50%', background: entry.stroke as string, flexShrink: 0 }} />
+                      <span style={{ color: '#374151' }}>{String(entry.dataKey)}</span>
+                      <span style={{ fontWeight: 700, color: entry.stroke as string, marginLeft: 4 }}>{entry.value} pts</span>
+                    </div>
+                  </div>
+                )
+              }}
+            />
+            {allUsers.map((user: any, idx: number) => (
+              <Line
+                key={user.id}
+                type="monotone"
+                dataKey={user.display_name}
+                stroke={LINE_COLORS[idx % LINE_COLORS.length]}
+                strokeWidth={activeUser === user.display_name ? 3 : activeUser ? 1 : 2}
+                strokeOpacity={activeUser && activeUser !== user.display_name ? 0.2 : 1}
+                dot={{ r: 2 }}
+                activeDot={{ r: 5 }}
+                onMouseEnter={() => setActiveUser(user.display_name)}
+                onMouseLeave={() => setActiveUser(null)}
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  )
+}
+
 function EstadisticasTab() {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -3648,95 +3739,7 @@ function EstadisticasTab() {
         )
       })()}
 
-      {/* Line Chart - Points Evolution by Date */}
-      {(() => {
-        const allUsers = data.users || []
-        const LINE_COLORS = ['#dc2626','#2563eb','#16a34a','#d97706','#7c3aed','#db2777','#0891b2','#65a30d',
-          '#ea580c','#4f46e5','#0d9488','#c026d3','#ca8a04','#9333ea','#e11d48','#0284c7',
-          '#15803d','#b45309','#6d28d9','#be185d','#0369a1','#047857','#92400e','#5b21b6']
-
-        const flatPreds = Object.values(latestPredsByUserAndMatch)
-
-        // Solo fechas con partidos calculados por admin
-        const dateMap: Record<string, any[]> = {}
-        flatPreds.forEach((p: any) => {
-          if (!p.match?.match_date || !p.calculated) return
-          const dateKey = new Date(p.match.match_date).toLocaleDateString('es-CO', {
-            timeZone: 'America/Bogota', day: 'numeric', month: 'short'
-          })
-          if (!dateMap[dateKey]) dateMap[dateKey] = []
-          dateMap[dateKey].push(p)
-        })
-
-        // Ordenar fechas cronológicamente
-        const sortedDates = Object.keys(dateMap).sort((a, b) =>
-          new Date(dateMap[a][0].match.match_date).getTime() - new Date(dateMap[b][0].match.match_date).getTime()
-        )
-
-        const cumulative: Record<string, number> = {}
-        allUsers.forEach((u: any) => { cumulative[u.display_name] = 0 })
-
-        const evolutionData = sortedDates.map(dateKey => {
-          const row: any = { fecha: dateKey }
-          allUsers.forEach((user: any) => {
-            const pts = dateMap[dateKey]
-              .filter((p: any) => p.user_id === user.id)
-              .reduce((sum: number, p: any) => sum + (p.points_earned || 0), 0)
-            cumulative[user.display_name] = (cumulative[user.display_name] || 0) + pts
-            row[user.display_name] = cumulative[user.display_name]
-          })
-          return row
-        })
-
-        return (
-          <div className="bg-white rounded-xl border border-slate-200 p-6" style={{ marginTop: '1.5rem' }}>
-            <h3 className="text-lg font-semibold text-slate-900 mb-1">Evolución de puntos por fecha</h3>
-            <p className="text-sm text-slate-600 mb-4">Puntaje acumulado de cada participante — {allUsers.length} jugadores</p>
-            {evolutionData.length === 0 ? (
-              <div className="text-center text-sm text-slate-400 py-10">
-                Aún no hay partidos jugados. La gráfica mostrará la evolución apenas se carguen resultados.
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={420}>
-                <LineChart data={evolutionData} margin={{ top: 8, right: 24, bottom: 24, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="fecha" tick={{ fontSize: 10 }} interval={0} angle={-45} textAnchor="end" height={50} />
-                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={30} />
-                  <Tooltip
-                    content={({ active, payload, label }) => {
-                      if (!active || !payload?.length) return null
-                      const sorted = [...payload].sort((a: any, b: any) => b.value - a.value)
-                      return (
-                        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, padding: '8px 12px', fontSize: 12, maxHeight: 260, overflowY: 'auto' }}>
-                          <p style={{ fontWeight: 700, marginBottom: 6, color: '#1e2a44' }}>{label}</p>
-                          {sorted.map((entry: any) => (
-                            <div key={entry.dataKey} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                              <span style={{ width: 10, height: 10, borderRadius: '50%', background: entry.stroke, flexShrink: 0 }} />
-                              <span style={{ color: '#374151', flex: 1 }}>{entry.dataKey}</span>
-                              <span style={{ fontWeight: 700, color: entry.stroke }}>{entry.value} pts</span>
-                            </div>
-                          ))}
-                        </div>
-                      )
-                    }}
-                  />
-                  {allUsers.map((user: any, idx: number) => (
-                    <Line
-                      key={user.id}
-                      type="monotone"
-                      dataKey={user.display_name}
-                      stroke={LINE_COLORS[idx % LINE_COLORS.length]}
-                      strokeWidth={2}
-                      dot={{ r: 2 }}
-                      activeDot={{ r: 4 }}
-                    />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        )
-      })()}
+      <EvolutionChart allUsers={data.users || []} latestPreds={latestPredsByUserAndMatch} />
 
       {/* Bar Charts - Most Picked Scores by Match */}
       <div className="bg-white rounded-xl border border-slate-200 p-6" style={{ marginTop: '1.5rem' }}>
