@@ -3224,6 +3224,7 @@ function EstadisticasTab() {
           pred_away,
           match_id,
           points_earned,
+          calculated,
           user_id,
           updated_at,
           match:matches!inner(
@@ -3656,10 +3657,10 @@ function EstadisticasTab() {
 
         const flatPreds = Object.values(latestPredsByUserAndMatch)
 
-        // Agrupar partidos con resultados por fecha (Colombia UTC-5)
+        // Solo fechas con partidos calculados por admin
         const dateMap: Record<string, any[]> = {}
         flatPreds.forEach((p: any) => {
-          if (!p.match?.match_date || p.points_earned == null) return
+          if (!p.match?.match_date || !p.calculated) return
           const dateKey = new Date(p.match.match_date).toLocaleDateString('es-CO', {
             timeZone: 'America/Bogota', day: 'numeric', month: 'short'
           })
@@ -3701,7 +3702,24 @@ function EstadisticasTab() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                   <XAxis dataKey="fecha" tick={{ fontSize: 10 }} interval={0} angle={-45} textAnchor="end" height={50} />
                   <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={30} />
-                  <Tooltip />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload?.length) return null
+                      const sorted = [...payload].sort((a: any, b: any) => b.value - a.value)
+                      return (
+                        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, padding: '8px 12px', fontSize: 12, maxHeight: 260, overflowY: 'auto' }}>
+                          <p style={{ fontWeight: 700, marginBottom: 6, color: '#1e2a44' }}>{label}</p>
+                          {sorted.map((entry: any) => (
+                            <div key={entry.dataKey} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                              <span style={{ width: 10, height: 10, borderRadius: '50%', background: entry.stroke, flexShrink: 0 }} />
+                              <span style={{ color: '#374151', flex: 1 }}>{entry.dataKey}</span>
+                              <span style={{ fontWeight: 700, color: entry.stroke }}>{entry.value} pts</span>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    }}
+                  />
                   {allUsers.map((user: any, idx: number) => (
                     <Line
                       key={user.id}
