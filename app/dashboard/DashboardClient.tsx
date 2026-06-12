@@ -3647,50 +3647,59 @@ function EstadisticasTab() {
         )
       })()}
 
-      {/* Line Chart - Points Evolution by Jornada */}
+      {/* Line Chart - Points Evolution by Date */}
       {(() => {
         const allUsers = data.users || []
         const LINE_COLORS = ['#dc2626','#2563eb','#16a34a','#d97706','#7c3aed','#db2777','#0891b2','#65a30d',
           '#ea580c','#4f46e5','#0d9488','#c026d3','#ca8a04','#9333ea','#e11d48','#0284c7',
           '#15803d','#b45309','#6d28d9','#be185d','#0369a1','#047857','#92400e','#5b21b6']
 
-        const jornadaRanges: [string, number, number][] = [
-          ['Jornada 1', 1, 24], ['Jornada 2', 25, 48], ['Jornada 3', 49, 72]
-        ]
-
         const flatPreds = Object.values(latestPredsByUserAndMatch)
+
+        // Agrupar partidos con resultados por fecha (Colombia UTC-5)
+        const dateMap: Record<string, any[]> = {}
+        flatPreds.forEach((p: any) => {
+          if (!p.match?.match_date || p.points_earned == null) return
+          const dateKey = new Date(p.match.match_date).toLocaleDateString('es-CO', {
+            timeZone: 'America/Bogota', day: 'numeric', month: 'short'
+          })
+          if (!dateMap[dateKey]) dateMap[dateKey] = []
+          dateMap[dateKey].push(p)
+        })
+
+        // Ordenar fechas cronológicamente
+        const sortedDates = Object.keys(dateMap).sort((a, b) =>
+          new Date(dateMap[a][0].match.match_date).getTime() - new Date(dateMap[b][0].match.match_date).getTime()
+        )
+
         const cumulative: Record<string, number> = {}
         allUsers.forEach((u: any) => { cumulative[u.display_name] = 0 })
 
-        const evolutionData: any[] = []
-        jornadaRanges.forEach(([label, start, end]) => {
-          const jornadaPreds = flatPreds.filter(
-            (p: any) => p.match?.match_number >= start && p.match?.match_number <= end && p.points_earned != null
-          )
-          if (jornadaPreds.length === 0) return
-          const row: any = { jornada: label }
+        const evolutionData = sortedDates.map(dateKey => {
+          const row: any = { fecha: dateKey }
           allUsers.forEach((user: any) => {
-            const pts = jornadaPreds.filter((p: any) => p.user_id === user.id)
+            const pts = dateMap[dateKey]
+              .filter((p: any) => p.user_id === user.id)
               .reduce((sum: number, p: any) => sum + (p.points_earned || 0), 0)
             cumulative[user.display_name] = (cumulative[user.display_name] || 0) + pts
             row[user.display_name] = cumulative[user.display_name]
           })
-          evolutionData.push(row)
+          return row
         })
 
         return (
           <div className="bg-white rounded-xl border border-slate-200 p-6" style={{ marginTop: '1.5rem' }}>
-            <h3 className="text-lg font-semibold text-slate-900 mb-1">Evolución de puntos por jornada</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-1">Evolución de puntos por fecha</h3>
             <p className="text-sm text-slate-600 mb-4">Puntaje acumulado de cada participante — {allUsers.length} jugadores</p>
             {evolutionData.length === 0 ? (
               <div className="text-center text-sm text-slate-400 py-10">
-                Aún no hay jornadas jugadas. La gráfica mostrará la evolución apenas se carguen resultados.
+                Aún no hay partidos jugados. La gráfica mostrará la evolución apenas se carguen resultados.
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={420}>
                 <LineChart data={evolutionData} margin={{ top: 8, right: 24, bottom: 24, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="jornada" tick={{ fontSize: 11 }} />
+                  <XAxis dataKey="fecha" tick={{ fontSize: 10 }} interval={0} angle={-45} textAnchor="end" height={50} />
                   <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={30} />
                   <Tooltip />
                   {allUsers.map((user: any, idx: number) => (
@@ -3700,8 +3709,8 @@ function EstadisticasTab() {
                       dataKey={user.display_name}
                       stroke={LINE_COLORS[idx % LINE_COLORS.length]}
                       strokeWidth={2}
-                      dot={{ r: 3 }}
-                      activeDot={{ r: 5 }}
+                      dot={{ r: 2 }}
+                      activeDot={{ r: 4 }}
                     />
                   ))}
                 </LineChart>
