@@ -1528,28 +1528,35 @@ function RankingTab({ currentUserId }: { currentUserId: string }) {
       return
     }
 
-    // Load ALL predictions from ALL users to calculate unique predictions
-    const { data: allPredictions } = await supabase
-      .from('predictions')
-      .select(`
-        id,
-        user_id,
-        match_id,
-        points_earned,
-        pred_home,
-        pred_away,
-        match:matches!inner(
+    // Load ALL calculated predictions paginando (Supabase limita 1000/página)
+    let allPredictions: any[] = []
+    for (let page = 0; page < 10; page++) {
+      const { data: batch } = await supabase
+        .from('predictions')
+        .select(`
           id,
-          phase,
-          group_id,
-          home_team_id,
-          away_team_id,
-          home_score,
-          away_score,
-          winner_team_id
-        )
-      `)
-      .eq('calculated', true)
+          user_id,
+          match_id,
+          points_earned,
+          pred_home,
+          pred_away,
+          match:matches!inner(
+            id,
+            phase,
+            group_id,
+            home_team_id,
+            away_team_id,
+            home_score,
+            away_score,
+            winner_team_id
+          )
+        `)
+        .eq('calculated', true)
+        .range(page * 1000, (page + 1) * 1000 - 1)
+      if (!batch || batch.length === 0) break
+      allPredictions = allPredictions.concat(batch)
+      if (batch.length < 1000) break
+    }
 
     // Load real group standings
     const { data: realStandings } = await supabase
