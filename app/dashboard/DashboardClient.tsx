@@ -3316,29 +3316,35 @@ function EstadisticasTab() {
         .select('id, type, value, user_id, updated_at, created_at')
         .order('updated_at', { ascending: false })
 
-      // Load all predictions with match info to get most picked scores
-      // Order by updated_at to get latest predictions per user-match
-      const { data: predictions } = await supabase
-        .from('predictions')
-        .select(`
-          pred_home,
-          pred_away,
-          match_id,
-          points_earned,
-          calculated,
-          user_id,
-          updated_at,
-          match:matches!inner(
-            match_number,
-            phase,
-            match_date,
-            home_team_label,
-            away_team_label,
-            home_team:teams!matches_home_team_id_fkey(name, flag_emoji),
-            away_team:teams!matches_away_team_id_fkey(name, flag_emoji)
-          )
-        `)
-        .order('updated_at', { ascending: false })
+      // Load all predictions paginando (Supabase limita 1000/página)
+      let predictions: any[] = []
+      for (let page = 0; page < 10; page++) {
+        const { data: batch } = await supabase
+          .from('predictions')
+          .select(`
+            pred_home,
+            pred_away,
+            match_id,
+            points_earned,
+            calculated,
+            user_id,
+            updated_at,
+            match:matches!inner(
+              match_number,
+              phase,
+              match_date,
+              home_team_label,
+              away_team_label,
+              home_team:teams!matches_home_team_id_fkey(name, flag_emoji),
+              away_team:teams!matches_away_team_id_fkey(name, flag_emoji)
+            )
+          `)
+          .order('updated_at', { ascending: false })
+          .range(page * 1000, (page + 1) * 1000 - 1)
+        if (!batch || batch.length === 0) break
+        predictions = predictions.concat(batch)
+        if (batch.length < 1000) break
+      }
 
       // Count played matches (with results)
       const { count: playedCount } = await supabase
@@ -3357,16 +3363,18 @@ function EstadisticasTab() {
         .from('profiles')
         .select('id, display_name')
 
-      const { data: allPredictions } = await supabase
-        .from('predictions')
-        .select(`
-          user_id,
-          points_earned,
-          match_id,
-          match:matches!inner(match_number, status)
-        `)
-        .eq('match:matches.status', 'finished')
-        .order('match:matches.match_number', { ascending: false })
+      let allPredictions: any[] = []
+      for (let page = 0; page < 10; page++) {
+        const { data: batch } = await supabase
+          .from('predictions')
+          .select(`user_id, points_earned, match_id, match:matches!inner(match_number, status)`)
+          .eq('match:matches.status', 'finished')
+          .order('match:matches.match_number', { ascending: false })
+          .range(page * 1000, (page + 1) * 1000 - 1)
+        if (!batch || batch.length === 0) break
+        allPredictions = allPredictions.concat(batch)
+        if (batch.length < 1000) break
+      }
 
       // Calculate streaks
       const streaks: any[] = []
