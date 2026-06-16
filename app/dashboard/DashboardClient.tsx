@@ -3340,6 +3340,12 @@ function EstadisticasTab() {
         `)
         .order('updated_at', { ascending: false })
 
+      // Count played matches (with results)
+      const { count: playedCount } = await supabase
+        .from('matches')
+        .select('*', { count: 'exact', head: true })
+        .not('home_score', 'is', null)
+
       // Load top 10 users by points
       const { data: users } = await supabase
         .from('profiles')
@@ -3380,7 +3386,7 @@ function EstadisticasTab() {
       })
       streaks.sort((a, b) => b.streak - a.streak)
 
-      setData({ specialPreds, predictions, users, streaks, allUsers })
+      setData({ specialPreds, predictions, users, streaks, allUsers, playedMatches: playedCount ?? 0 })
     } catch (error) {
       console.error('Error loading estadísticas:', error)
     } finally {
@@ -3489,9 +3495,8 @@ function EstadisticasTab() {
   const championFavorite = championEntries[0] || ['', 0]
   const championPercent = totalParticipants > 0 ? Math.round(((championFavorite[1] as number) / totalParticipants) * 100) : 0
 
-  // Count total matches and played matches
   const totalMatches = 104
-  const playedMatches = 0 // This would come from matches with results
+  const playedMatches = data.playedMatches ?? 0
 
   return (
     <div>
@@ -3519,7 +3524,7 @@ function EstadisticasTab() {
 
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Partidos faltantes</div>
-          <div className="text-4xl font-bold text-slate-900">{totalMatches}</div>
+          <div className="text-4xl font-bold text-slate-900">{totalMatches - playedMatches}</div>
           <div className="text-sm text-slate-600 mt-1">{playedMatches}/{totalMatches} partidos jugados</div>
         </div>
       </div>
