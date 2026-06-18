@@ -1549,6 +1549,7 @@ function RankingTab() {
           )
         `)
         .eq('calculated', true)
+        .order('match_id').order('user_id')
         .range(page * 1000, (page + 1) * 1000 - 1)
       if (!batch || batch.length === 0) break
       allPredictions = allPredictions.concat(batch)

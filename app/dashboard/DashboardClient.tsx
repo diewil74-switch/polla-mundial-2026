@@ -236,6 +236,7 @@ function InicioTab({
       const { data: batch } = await supabase
         .from('predictions')
         .select('user_id, points_earned')
+        .order('match_id').order('user_id')
         .range(page * 1000, (page + 1) * 1000 - 1)
       if (!batch || batch.length === 0) break
       allCalcPreds = allCalcPreds.concat(batch)
@@ -1581,6 +1582,7 @@ function RankingTab({ currentUserId }: { currentUserId: string }) {
           )
         `)
         .eq('calculated', true)
+        .order('match_id').order('user_id')
         .range(page * 1000, (page + 1) * 1000 - 1)
       if (!batch || batch.length === 0) break
       allPredictions = allPredictions.concat(batch)
@@ -2741,11 +2743,14 @@ function ResultadosTab({ currentUserId }: { currentUserId: string }) {
         .order('match_number')
 
       // Paginar predicciones (Supabase limita a 1000 por página)
+      // ORDER BY requerido para que .range() sea consistente entre páginas
       let predictions: any[] = []
       for (let page = 0; page < 10; page++) {
         const { data: batch } = await supabase
           .from('predictions')
           .select('user_id, match_id, pred_home, pred_away, points_earned')
+          .order('match_id', { ascending: true })
+          .order('user_id', { ascending: true })
           .range(page * 1000, (page + 1) * 1000 - 1)
         if (!batch || batch.length === 0) break
         predictions = predictions.concat(batch)
