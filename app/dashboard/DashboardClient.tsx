@@ -225,23 +225,52 @@ function InicioTab({
     console.log('[InicioTab] 🔍 user_ids en los datos:', specialData?.map(s => s.user_id))
     if (specialError) console.error('[InicioTab] ❌ Error:', specialError)
 
-    // Load full ranking to get user's actual position
+    // Load full ranking
     const { data: allProfilesData } = await supabase
       .from('profiles')
       .select('*')
-      .order('total_points', { ascending: false })
+
+    // Compute correct totals from pts_earned (paginated)
+    let allCalcPreds: any[] = []
+    for (let page = 0; page < 10; page++) {
+      const { data: batch } = await supabase
+        .from('predictions')
+        .select('user_id, points_earned')
+        .range(page * 1000, (page + 1) * 1000 - 1)
+      if (!batch || batch.length === 0) break
+      allCalcPreds = allCalcPreds.concat(batch)
+      if (batch.length < 1000) break
+    }
+
+    // Sum pts_earned per user
+    const ptsByUser: Record<string, number> = {}
+    allCalcPreds.forEach((p: any) => {
+      ptsByUser[p.user_id] = (ptsByUser[p.user_id] || 0) + (p.points_earned || 0)
+    })
+
+    // Also add special predictions points
+    const { data: allSpecial } = await supabase
+      .from('special_predictions')
+      .select('user_id, points_earned')
+    allSpecial?.forEach((p: any) => {
+      ptsByUser[p.user_id] = (ptsByUser[p.user_id] || 0) + (p.points_earned || 0)
+    })
 
     if (matchesData) setMatches(matchesData as Match[])
     if (allMatchesData) setAllMatches(allMatchesData as Match[])
     if (predsData) {
       const predMap: Record<number, Prediction> = {}
-      predsData.forEach((p: any) => {
-        predMap[p.match_id] = p
-      })
+      predsData.forEach((p: any) => { predMap[p.match_id] = p })
       setPredictions(predMap)
     }
     if (specialData) setSpecialPredictions(specialData as SpecialPrediction[])
-    if (allProfilesData) setRanking(allProfilesData as Profile[])
+    if (allProfilesData) {
+      const ranked = allProfilesData.map((p: any) => ({
+        ...p,
+        total_points: ptsByUser[p.id] || 0
+      })).sort((a: any, b: any) => b.total_points - a.total_points)
+      setRanking(ranked as Profile[])
+    }
     setLoading(false)
   }
 
@@ -361,7 +390,7 @@ function InicioTab({
               <span className="hr-n num">{userRank || '—'}</span>
             </div>
             <div className="hr-info">
-              <div className="hr-pts num">{currentProfile?.total_points || 0}<small> pts</small></div>
+              <div className="hr-pts num">{ranking.find(p => p.id === userId)?.total_points || 0}<small> pts</small></div>
               <div className="hr-sub">{completedPredictions}/{totalMatches} predicciones cargadas</div>
             </div>
             <button className="btn-ghost" onClick={() => onNavigate('ranking')}>
