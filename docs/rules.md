@@ -10,8 +10,9 @@
 | Resultado equivocado | 0 pts |
 
 ## Bono orden de grupo
-- Si se acierta el 1° Y el 2° clasificado del grupo en sus posiciones exactas → +5 pts
-- Ambas posiciones deben estar correctas simultáneamente
+- Si se acierta el orden exacto de las 4 posiciones del grupo → +3 pts
+- Las 4 posiciones deben estar correctas simultáneamente
+- Aplica solo cuando los 6 partidos del grupo estén completos
 - Deadline: antes del primer partido del grupo
 
 ## Rondas eliminatorias (por partido)

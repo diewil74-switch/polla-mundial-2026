@@ -9,6 +9,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async headers() {
+    return [
+      {
+        // No cachear páginas HTML (excluye assets estáticos con hash en URL)
+        source: '/((?!_next/static|_next/image|favicon).*)',
+        headers: [{ key: 'Cache-Control', value: 'no-store, must-revalidate' }],
+      },
+    ]
+  },
 };
 
 export default nextConfig;

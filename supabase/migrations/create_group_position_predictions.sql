@@ -39,5 +39,17 @@ CREATE POLICY "Users can delete own group position predictions"
   FOR DELETE
   USING (auth.uid() = user_id);
 
+-- Policy: Admins can view all predictions (needed to recalculate bonuses for all users)
+CREATE POLICY "Admins can view all group position predictions"
+  ON group_position_predictions
+  FOR SELECT
+  USING (
+    auth.uid() = user_id
+    OR EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
 -- Add index for faster queries
 CREATE INDEX idx_group_position_predictions_user_group ON group_position_predictions(user_id, group_id);
