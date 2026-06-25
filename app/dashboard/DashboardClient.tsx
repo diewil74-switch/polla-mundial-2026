@@ -1179,7 +1179,7 @@ function GroupsTab({ userId }: { userId: string }) {
         .eq('user_id', userId),
       supabase
         .from('matches')
-        .select('group_id, home_score, away_score')
+        .select('group_id, home_team_id, away_team_id, home_score, away_score')
         .eq('phase', 'groups')
         .not('home_score', 'is', null)
         .not('away_score', 'is', null),
@@ -1375,51 +1375,43 @@ function GroupTable({
   // Lock when first match of this group starts
   const isLocked = firstMatchDate ? new Date() >= new Date(firstMatchDate.getTime() - 15 * 60 * 1000) : false
 
-  // Check if user earned group order bonus (all 4 positions must match and all 6 matches complete)
-  const groupRealStandings = realStandings.filter((s: any) => s.group_id === group)
-  const completedMatchesInGroup = completedGroupMatches.filter((m: any) => m.group_id === group).length
-  let earnedBonus = false
+  // Compute real standings dynamically from completed matches
+  const groupCompletedMatches = completedGroupMatches.filter((m: any) => m.group_id === group)
+  const groupComplete = groupCompletedMatches.length === 6
 
-  // DEBUG: Log group A info
-  if (group === 'A') {
-    console.log('=== DEBUG GRUPO A ===')
-    console.log('Partidos completos:', completedMatchesInGroup)
-    console.log('Group real standings:', groupRealStandings)
-    console.log('Predicted positions:', standings.map(s => ({ team: s.team.name, pos: s.predictedPosition })))
+  let dynamicRealStandings: Array<{ team_id: number; position: number }> = []
+  if (groupComplete) {
+    const teamStats: Record<number, { pts: number; gf: number; gc: number }> = {}
+    groupCompletedMatches.forEach((m: any) => {
+      if (!teamStats[m.home_team_id]) teamStats[m.home_team_id] = { pts: 0, gf: 0, gc: 0 }
+      if (!teamStats[m.away_team_id]) teamStats[m.away_team_id] = { pts: 0, gf: 0, gc: 0 }
+      teamStats[m.home_team_id].gf += m.home_score
+      teamStats[m.home_team_id].gc += m.away_score
+      teamStats[m.away_team_id].gf += m.away_score
+      teamStats[m.away_team_id].gc += m.home_score
+      if (m.home_score > m.away_score) teamStats[m.home_team_id].pts += 3
+      else if (m.home_score < m.away_score) teamStats[m.away_team_id].pts += 3
+      else { teamStats[m.home_team_id].pts += 1; teamStats[m.away_team_id].pts += 1 }
+    })
+    dynamicRealStandings = Object.entries(teamStats)
+      .map(([tid, s]) => ({ team_id: Number(tid), pts: s.pts, gf: s.gf, gd: s.gf - s.gc }))
+      .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf)
+      .map((t, i) => ({ team_id: t.team_id, position: i + 1 }))
   }
 
-  if (completedMatchesInGroup === 6 && groupRealStandings.length >= 4 && standings.length >= 4) {
-    // Check if all predicted positions match real standings
+  // Check if user earned group order bonus
+  let earnedBonus = false
+  if (groupComplete && dynamicRealStandings.length === 4) {
     let allMatch = true
-    for (let i = 0; i < 4; i++) {
-      const realStanding = groupRealStandings.find((s: any) => s.position === i + 1)
-      const teamWithPredictedPos = standings.find((s) => s.predictedPosition === i + 1)
-
-      if (group === 'A') {
-        console.log(`Posición ${i + 1}:`, {
-          realTeam: realStanding?.team_id,
-          predictedTeam: teamWithPredictedPos?.team.id,
-          match: realStanding?.team_id === teamWithPredictedPos?.team.id
-        })
-      }
-
-      if (!realStanding || !teamWithPredictedPos || realStanding.team_id !== teamWithPredictedPos.team.id) {
+    for (let pos = 1; pos <= 4; pos++) {
+      const realTeamId = dynamicRealStandings.find(s => s.position === pos)?.team_id
+      const predictedTeamId = standings.find(s => s.predictedPosition === pos)?.team.id
+      if (!realTeamId || !predictedTeamId || realTeamId !== predictedTeamId) {
         allMatch = false
         break
       }
     }
-
     earnedBonus = allMatch
-    if (group === 'A') {
-      console.log('Bono otorgado:', earnedBonus)
-    }
-  } else if (group === 'A') {
-    console.log('No se evalúa bono porque:', {
-      completedMatchesInGroup,
-      needsToBeExactly: 6,
-      groupRealStandingsLength: groupRealStandings.length,
-      standingsLength: standings.length
-    })
   }
 
   // Check if all 4 positions are filled
@@ -1431,9 +1423,15 @@ function GroupTable({
       <div className="group-head">
         <span className="group-letter">{group}</span>
         <span className="group-title">Grupo {group}</span>
-        <span className={`group-proj${isComplete ? ' done' : ''}`}>
-          {earnedBonus ? '✓ Proyección lista (+3)' : isComplete ? '✓ Proyección lista (+3)' : 'Asigna 1–4'}
-        </span>
+        {groupComplete ? (
+          <span className={`group-proj done`} style={{ color: earnedBonus ? '#16a34a' : '#dc2626', fontWeight: 700 }}>
+            {earnedBonus ? '✅ +3 pts ganados' : '❌ Bono no ganado'}
+          </span>
+        ) : (
+          <span className={`group-proj${isComplete ? ' done' : ''}`}>
+            {isComplete ? '✓ Proyección lista (+3)' : 'Asigna 1–4'}
+          </span>
+        )}
       </div>
       <table className="group-table">
         <thead>
