@@ -1695,6 +1695,12 @@ function RankingTab({ currentUserId }: { currentUserId: string }) {
             if (isExactScore) {
               exactScore += 3
             }
+            if (pred.match.home_score !== null && pred.pred_home === pred.match.home_score) {
+              correctGoal += 1
+            }
+            if (pred.match.away_score !== null && pred.pred_away === pred.match.away_score) {
+              correctGoal += 1
+            }
           }
         })
 
@@ -1812,6 +1818,8 @@ function RankingTab({ currentUserId }: { currentUserId: string }) {
               <th className="px-3 py-3 text-center">Campeón</th>
               <th className="px-3 py-3 text-center">Subcampeón</th>
               <th className="px-3 py-3 text-center whitespace-nowrap">Tercer puesto</th>
+              <th className="px-3 py-3 text-center">Goleador</th>
+              <th className="px-3 py-3 text-center">MVP</th>
               <th className="px-3 py-3 text-center bg-red-700 font-bold">Total</th>
             </tr>
           </thead>
@@ -1851,6 +1859,8 @@ function RankingTab({ currentUserId }: { currentUserId: string }) {
                   <td className="px-3 py-3 text-center text-slate-700">{profile.champion}</td>
                   <td className="px-3 py-3 text-center text-slate-700">{profile.runnerUp}</td>
                   <td className="px-3 py-3 text-center text-slate-700">{profile.thirdPlace}</td>
+                  <td className="px-3 py-3 text-center text-slate-700">{profile.topScorer}</td>
+                  <td className="px-3 py-3 text-center text-slate-700">{profile.mvp}</td>
                   <td className="px-3 py-3 text-center bg-red-50">
                     <span className="text-lg font-bold text-red-600">{profile.total_points}</span>
                   </td>
