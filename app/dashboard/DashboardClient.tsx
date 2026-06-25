@@ -1221,20 +1221,6 @@ function GroupsTab({ userId }: { userId: string }) {
 
     if (completedMatchesRes.data) {
       setCompletedGroupMatches(completedMatchesRes.data)
-      console.log('=== PARTIDOS COMPLETOS CARGADOS ===')
-      console.log('Total partidos con scores:', completedMatchesRes.data.length)
-      console.log('Partidos del grupo A:', completedMatchesRes.data.filter((m: any) => m.group_id === 'A'))
-
-      // DEBUG: Ver TODOS los partidos del grupo A (con y sin scores)
-      const { data: allGroupAMatches } = await supabase
-        .from('matches')
-        .select('id, match_number, group_id, phase, home_score, away_score, home_team_id, away_team_id')
-        .eq('phase', 'groups')
-        .eq('group_id', 'A')
-
-      console.log('=== TODOS LOS PARTIDOS DEL GRUPO A ===')
-      console.log('Total partidos:', allGroupAMatches?.length)
-      console.log('Detalle:', allGroupAMatches)
     }
     setLoading(false)
   }
@@ -1424,7 +1410,10 @@ function GroupTable({
         <span className="group-letter">{group}</span>
         <span className="group-title">Grupo {group}</span>
         {groupComplete ? (
-          <span className={`group-proj done`} style={{ color: earnedBonus ? '#16a34a' : '#dc2626', fontWeight: 700 }}>
+          <span
+            className="group-proj done"
+            style={{ background: earnedBonus ? '#16a34a' : '#dc2626', color: '#fff', fontWeight: 700 }}
+          >
             {earnedBonus ? '✅ +3 pts ganados' : '❌ Bono no ganado'}
           </span>
         ) : (
