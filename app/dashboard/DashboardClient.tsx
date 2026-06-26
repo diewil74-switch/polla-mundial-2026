@@ -1918,7 +1918,7 @@ function BracketTab({ userId }: { userId: string }) {
     setLoading(false)
   }
 
-  async function savePrediction(matchId: number, predHome: number, predAway: number) {
+  async function savePrediction(matchId: number, predHome: number, predAway: number, predWinnerTeamId: number | null = null) {
     const { error } = await supabase
       .from('predictions')
       .upsert(
@@ -1927,6 +1927,7 @@ function BracketTab({ userId }: { userId: string }) {
           match_id: matchId,
           pred_home: predHome,
           pred_away: predAway,
+          pred_winner_team_id: predWinnerTeamId,
           updated_at: new Date().toISOString(),
         },
         {
@@ -2004,16 +2005,18 @@ function BracketMatchCard({
 }: {
   match: Match
   prediction?: any
-  onSavePrediction?: (matchId: number, predHome: number, predAway: number) => Promise<boolean>
+  onSavePrediction?: (matchId: number, predHome: number, predAway: number, predWinnerTeamId: number | null) => Promise<boolean>
 }) {
   const [predHome, setPredHome] = useState(prediction?.pred_home ?? 0)
   const [predAway, setPredAway] = useState(prediction?.pred_away ?? 0)
+  const [predWinner, setPredWinner] = useState<number | null>(prediction?.pred_winner_team_id ?? null)
   const [saving, setSaving] = useState(false)
 
   // Update local state when prediction changes
   useEffect(() => {
     setPredHome(prediction?.pred_home ?? 0)
     setPredAway(prediction?.pred_away ?? 0)
+    setPredWinner(prediction?.pred_winner_team_id ?? null)
   }, [prediction])
 
   const hasResult = match.home_score !== null && match.away_score !== null
@@ -2032,12 +2035,16 @@ function BracketMatchCard({
   const dateStr = matchDate.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
   const cityStr = match.venue || match.city || ''
 
-  const hasChanges = !prediction || predHome !== prediction.pred_home || predAway !== prediction.pred_away
+  const isDraw = predHome === predAway
+  const hasChanges = !prediction ||
+    predHome !== prediction.pred_home ||
+    predAway !== prediction.pred_away ||
+    predWinner !== (prediction?.pred_winner_team_id ?? null)
 
   const handleSave = async () => {
     if (!onSavePrediction) return
     setSaving(true)
-    await onSavePrediction(match.id, predHome, predAway)
+    await onSavePrediction(match.id, predHome, predAway, isDraw ? predWinner : null)
     setSaving(false)
   }
 
@@ -2061,6 +2068,25 @@ function BracketMatchCard({
         )}
         {hasResult && <span className="br-score num">{match.away_score}</span>}
       </div>
+      {teamsAssigned && canEdit && isDraw && (
+        <div className="br-winner-select">
+          <span className="br-winner-label">¿Quién avanza en penales?</span>
+          <div className="br-winner-pills">
+            <button
+              className={`br-winner-pill${predWinner === match.home_team_id ? ' selected' : ''}`}
+              onClick={() => setPredWinner(predWinner === match.home_team_id ? null : (match.home_team_id as number))}
+            >
+              {homeFlag && <Flag emoji={homeFlag} size={14} />} {homeTeamName}
+            </button>
+            <button
+              className={`br-winner-pill${predWinner === match.away_team_id ? ' selected' : ''}`}
+              onClick={() => setPredWinner(predWinner === match.away_team_id ? null : (match.away_team_id as number))}
+            >
+              {awayFlag && <Flag emoji={awayFlag} size={14} />} {awayTeamName}
+            </button>
+          </div>
+        </div>
+      )}
       {teamsAssigned && canEdit && hasChanges && (
         <div className="br-actions">
           <button onClick={handleSave} disabled={saving} className="btn-save-pred" style={{ width: '100%' }}>

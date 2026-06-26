@@ -334,7 +334,7 @@ function ResultsTab() {
       // Recalculate points for all predictions
       const { data: predictions, error: predError } = await supabase
         .from('predictions')
-        .select('user_id, pred_home, pred_away')
+        .select('user_id, pred_home, pred_away, pred_winner_team_id')
         .eq('match_id', matchId)
 
       if (predError) {
@@ -346,16 +346,16 @@ function ResultsTab() {
       }
 
       if (predictions && predictions.length > 0) {
-        // Convert predictions to format expected by scoring function
         const allPredictions = predictions.map((p) => ({
           pred_home: p.pred_home,
           pred_away: p.pred_away,
+          pred_winner_team_id: p.pred_winner_team_id,
         }))
 
         for (const pred of predictions) {
           const points = calculateMatchPointsWithBonus(
             { ...match, home_score: homeScore, away_score: awayScore, winner_team_id: winnerId },
-            { pred_home: pred.pred_home, pred_away: pred.pred_away },
+            { pred_home: pred.pred_home, pred_away: pred.pred_away, pred_winner_team_id: pred.pred_winner_team_id },
             allPredictions
           )
 
@@ -723,10 +723,43 @@ function BracketTab() {
     if (!match) return
 
     // Update winner_team_id
-    await supabase
+    const { error: matchError } = await supabase
       .from('matches')
       .update({ winner_team_id: winnerId })
       .eq('id', matchId)
+
+    if (matchError) {
+      alert(`Error al asignar ganador: ${matchError.message}`)
+      setSaving(null)
+      return
+    }
+
+    // Recalculate predictions for this match with the new winner
+    const { data: predictions } = await supabase
+      .from('predictions')
+      .select('user_id, pred_home, pred_away, pred_winner_team_id')
+      .eq('match_id', matchId)
+
+    if (predictions && predictions.length > 0) {
+      const allPredictions = predictions.map(p => ({
+        pred_home: p.pred_home,
+        pred_away: p.pred_away,
+        pred_winner_team_id: p.pred_winner_team_id,
+      }))
+      for (const pred of predictions) {
+        const points = calculateMatchPointsWithBonus(
+          { ...match, winner_team_id: winnerId },
+          { pred_home: pred.pred_home, pred_away: pred.pred_away, pred_winner_team_id: pred.pred_winner_team_id },
+          allPredictions
+        )
+        await supabase
+          .from('predictions')
+          .update({ points_earned: points, calculated: true })
+          .eq('match_id', matchId)
+          .eq('user_id', pred.user_id)
+      }
+      await fetch('/api/admin/recalculate-points', { method: 'POST' })
+    }
 
     // Find next match and position
     const nextMatchNumber = getNextMatchNumber(match.match_number)
@@ -983,6 +1016,35 @@ function BracketMatchCard({ match, teams, onAssign, onAssignBothTeams, onClearTe
             <p className="text-sm text-slate-600 mt-1">
               Resultado: {match.home_score} - {match.away_score}
             </p>
+          )}
+          {hasResult && match.home_score === match.away_score && match.home_team_id && match.away_team_id && (
+            <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm font-semibold text-amber-800 mb-2">⚽ Empate — ¿Quién avanzó por penales?</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onAssign(match.id, match.home_team_id)}
+                  disabled={saving}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold border transition-colors disabled:opacity-50 ${
+                    match.winner_team_id === match.home_team_id
+                      ? 'bg-green-600 text-white border-green-600'
+                      : 'bg-white text-slate-700 border-slate-300 hover:border-green-500'
+                  }`}
+                >
+                  {match.home_team?.flag_emoji} {match.home_team?.name || 'Local'}{match.winner_team_id === match.home_team_id ? ' ✓' : ''}
+                </button>
+                <button
+                  onClick={() => onAssign(match.id, match.away_team_id)}
+                  disabled={saving}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold border transition-colors disabled:opacity-50 ${
+                    match.winner_team_id === match.away_team_id
+                      ? 'bg-green-600 text-white border-green-600'
+                      : 'bg-white text-slate-700 border-slate-300 hover:border-green-500'
+                  }`}
+                >
+                  {match.away_team?.flag_emoji} {match.away_team?.name || 'Visitante'}{match.winner_team_id === match.away_team_id ? ' ✓' : ''}
+                </button>
+              </div>
+            </div>
           )}
         </div>
 

@@ -13,6 +13,7 @@ type Match = {
 type Prediction = {
   pred_home: number
   pred_away: number
+  pred_winner_team_id?: number | null
 }
 
 /**
@@ -80,11 +81,13 @@ export function calculateEliminationPoints(
 
   let points = 0
 
-  // Predicted winner (who advances)
+  // Predicted winner (who advances) — explicit pick for draws, else infer from score
   const predictedWinner =
-    prediction.pred_home > prediction.pred_away
-      ? match.home_team_id
-      : match.away_team_id
+    prediction.pred_winner_team_id != null
+      ? prediction.pred_winner_team_id
+      : prediction.pred_home > prediction.pred_away
+        ? match.home_team_id
+        : match.away_team_id
 
   // Correct qualifier: 3 points
   if (predictedWinner === match.winner_team_id) {

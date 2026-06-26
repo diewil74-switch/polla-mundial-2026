@@ -272,6 +272,12 @@ body {
 .br-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .br-name.muted { color: var(--muted); }
 .brc-n { display: inline-block; background: var(--surface-3); color: var(--muted); border-radius: 6px; padding: 0 6px; font-size: 10px; margin-left: 4px; vertical-align: middle; }
+.br-winner-select { padding: 8px 10px; border-top: 1px solid var(--border); background: color-mix(in oklab, var(--accent) 6%, var(--surface-2)); }
+.br-winner-label { display: block; font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; margin-bottom: 6px; }
+.br-winner-pills { display: flex; gap: 6px; }
+.br-winner-pill { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 6px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text); font-size: 11px; font-weight: 600; cursor: pointer; transition: all .15s; font-family: var(--font-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.br-winner-pill:hover { border-color: var(--accent); background: var(--accent-dim); }
+.br-winner-pill.selected { border-color: var(--accent); background: var(--accent); color: #fff; }
 .br-actions { padding: 8px 10px; border-top: 1px solid var(--border); background: var(--surface-2); }
 .br-meta { padding: 6px 11px; font-size: 10px; color: var(--muted); border-top: 1px solid var(--border); background: var(--surface-2); letter-spacing: .01em; }
 .br-match.ko .br-name { white-space: normal; font-size: 12px; line-height: 1.25; }
