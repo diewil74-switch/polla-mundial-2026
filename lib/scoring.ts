@@ -81,9 +81,10 @@ export function calculateEliminationPoints(
 
   let points = 0
 
-  // Predicted winner (who advances) — explicit pick for draws, else infer from score
+  // Predicted winner: only use explicit pick when prediction IS a draw (avoids stale values)
+  const isDraw = prediction.pred_home === prediction.pred_away
   const predictedWinner =
-    prediction.pred_winner_team_id != null
+    isDraw && prediction.pred_winner_team_id != null
       ? prediction.pred_winner_team_id
       : prediction.pred_home > prediction.pred_away
         ? match.home_team_id
