@@ -2061,14 +2061,16 @@ function BracketMatchCard({
         )}
         {hasResult && <span className="br-score num">{match.away_score}</span>}
       </div>
+      {teamsAssigned && canEdit && hasChanges && (
+        <div className="br-actions">
+          <button onClick={handleSave} disabled={saving} className="btn-save-pred" style={{ width: '100%' }}>
+            {saving ? 'Guardando...' : '💾 Guardar predicción'}
+          </button>
+        </div>
+      )}
       <div className="br-meta">
         P{match.match_number} · {dateStr} · {cityStr}
         {hasResult && pts > 0 && <PtsBadge pts={pts} />}
-        {teamsAssigned && canEdit && hasChanges && (
-          <button onClick={handleSave} disabled={saving} className="btn-primary" style={{ marginLeft: 8, padding: '4px 12px', fontSize: '11px' }}>
-            {saving ? 'Guardando...' : 'Guardar'}
-          </button>
-        )}
       </div>
     </div>
   )
