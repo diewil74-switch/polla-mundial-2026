@@ -67,7 +67,8 @@ export function calculateGroupStagePoints(
  * Calculate points for an elimination round match prediction
  * Note: Scores include extra time (120 min) if applicable
  * Points are CUMULATIVE:
- * - Correct qualifier: 3 pts
+ * - Correct result (winner or draw): 2 pts
+ * - Correct qualifier (who advances): 3 pts
  * - Exact score: 3 pts
  * - Each correct goal: 1 pt (2 pts total if both)
  */
@@ -81,16 +82,25 @@ export function calculateEliminationPoints(
 
   let points = 0
 
-  // Predicted winner: only use explicit pick when prediction IS a draw (avoids stale values)
-  const isDraw = prediction.pred_home === prediction.pred_away
+  // Correct result (winner or draw): 2 points
+  const actualResult =
+    match.home_score > match.away_score ? 'home' : match.home_score < match.away_score ? 'away' : 'draw'
+  const predictedResult =
+    prediction.pred_home > prediction.pred_away ? 'home' : prediction.pred_home < prediction.pred_away ? 'away' : 'draw'
+  if (actualResult === predictedResult) {
+    points += 2
+  }
+
+  // Predicted qualifier: explicit pill pick for draws, inferred from score otherwise
+  const predIsDraw = prediction.pred_home === prediction.pred_away
   const predictedWinner =
-    isDraw && prediction.pred_winner_team_id != null
+    predIsDraw && prediction.pred_winner_team_id != null
       ? prediction.pred_winner_team_id
       : prediction.pred_home > prediction.pred_away
         ? match.home_team_id
         : match.away_team_id
 
-  // Correct qualifier: 3 points
+  // Correct qualifier (who advances): 3 points
   if (predictedWinner === match.winner_team_id) {
     points += 3
   }
