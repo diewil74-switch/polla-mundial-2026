@@ -18,9 +18,16 @@
 ## Rondas eliminatorias (por partido)
 | Condición | Puntos |
 |---|---|
-| Acertar el clasificado a la siguiente ronda | 3 pts |
-| + Acertar resultado exacto en 120 min | +3 pts adicionales |
+| Ganador o empate correcto | 2 pts |
+| Clasificado correcto (quien avanza a la siguiente ronda) | +3 pts |
+| Marcador exacto en 120 min | +3 pts |
+| Gol acertado por equipo | +1 pt (c/u) |
 | Predicción única (único jugador que acertó marcador exacto) | +5 pts |
+
+**Notas eliminatorias:**
+- Para marcador en empate: el clasificado se determina por el equipo seleccionado en la predicción (penales)
+- Para marcador con ganador claro: el clasificado se infiere automáticamente del marcador
+- Puntos son acumulativos — máximo 12 pts por partido (+ 5 si predicción única)
 
 ## Predicciones especiales
 | Predicción | Puntos | Deadline |
