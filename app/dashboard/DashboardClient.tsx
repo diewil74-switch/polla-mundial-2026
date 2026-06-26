@@ -1919,24 +1919,24 @@ function BracketTab({ userId }: { userId: string }) {
   }
 
   async function savePrediction(matchId: number, predHome: number, predAway: number, predWinnerTeamId: number | null = null) {
+    const payload: Record<string, any> = {
+      user_id: userId,
+      match_id: matchId,
+      pred_home: predHome,
+      pred_away: predAway,
+      updated_at: new Date().toISOString(),
+    }
+    if (predWinnerTeamId !== null) {
+      payload.pred_winner_team_id = predWinnerTeamId
+    }
+
     const { error } = await supabase
       .from('predictions')
-      .upsert(
-        {
-          user_id: userId,
-          match_id: matchId,
-          pred_home: predHome,
-          pred_away: predAway,
-          pred_winner_team_id: predWinnerTeamId,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: 'user_id,match_id',
-        }
-      )
+      .upsert(payload, { onConflict: 'user_id,match_id' })
 
     if (error) {
       console.error('Error guardando predicción en Llaves:', error)
+      alert(`Error al guardar predicción: ${error.message}`)
       return false
     } else {
       await loadData()
