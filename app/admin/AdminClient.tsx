@@ -801,39 +801,41 @@ function BracketTab() {
     loadData()
   }
 
-  // Determine which match number comes next in bracket
-  function getNextMatchNumber(currentMatchNumber: number): number | null {
-    // Dieciseisavos/R32 (73-88) → Octavos/R16 (89-96)
-    if (currentMatchNumber >= 73 && currentMatchNumber <= 88) {
-      return 89 + Math.floor((currentMatchNumber - 73) / 2)
-    }
-    // Octavos/R16 (89-96) → Cuartos/R8 (97-100)
-    if (currentMatchNumber >= 89 && currentMatchNumber <= 96) {
-      return 97 + Math.floor((currentMatchNumber - 89) / 2)
-    }
-    // Cuartos/R8 (97-100) → Semis (101-102)
-    if (currentMatchNumber >= 97 && currentMatchNumber <= 100) {
-      return 101 + Math.floor((currentMatchNumber - 97) / 2)
-    }
-    // Semis (101-102) → Final (104)
-    if (currentMatchNumber >= 101 && currentMatchNumber <= 102) {
-      return 104
-    }
-    // Final (104) has no next match
-    if (currentMatchNumber === 104) {
-      return null
-    }
-    // Tercer puesto (103) has no next match
-    if (currentMatchNumber === 103) {
-      return null
-    }
-    return null
+  // Lookup tables for real World Cup 2026 bracket progression
+  const NEXT_MATCH: Record<number, number> = {
+    // R32 → Octavos
+    73: 90, 74: 89, 75: 90, 76: 91, 77: 89, 78: 91,
+    79: 92, 80: 92, 81: 94, 82: 94, 83: 93, 84: 93,
+    85: 96, 86: 95, 87: 96, 88: 95,
+    // Octavos → Cuartos
+    89: 97, 90: 97, 91: 99, 92: 99,
+    93: 98, 94: 98, 95: 100, 96: 100,
+    // Cuartos → Semis
+    97: 101, 98: 101, 99: 102, 100: 102,
+    // Semis → Final
+    101: 104, 102: 104,
   }
 
-  // Determine if winner goes to home or away position in next match
+  const POSITION_IN_NEXT: Record<number, 'home' | 'away'> = {
+    // R32 → Octavos
+    73: 'home', 74: 'home', 75: 'away', 76: 'home', 77: 'away', 78: 'away',
+    79: 'home', 80: 'away', 81: 'home', 82: 'away', 83: 'home', 84: 'away',
+    85: 'home', 86: 'home', 87: 'away', 88: 'away',
+    // Octavos → Cuartos
+    89: 'home', 90: 'away', 91: 'home', 92: 'away',
+    93: 'home', 94: 'away', 95: 'home', 96: 'away',
+    // Cuartos → Semis
+    97: 'home', 98: 'away', 99: 'home', 100: 'away',
+    // Semis → Final
+    101: 'home', 102: 'away',
+  }
+
+  function getNextMatchNumber(currentMatchNumber: number): number | null {
+    return NEXT_MATCH[currentMatchNumber] ?? null
+  }
+
   function getPositionInNextMatch(currentMatchNumber: number): 'home' | 'away' {
-    // Odd match numbers go to home, even go to away
-    return currentMatchNumber % 2 === 1 ? 'home' : 'away'
+    return POSITION_IN_NEXT[currentMatchNumber] ?? 'home'
   }
 
   if (loading) return <div className="text-center py-12">Cargando...</div>
