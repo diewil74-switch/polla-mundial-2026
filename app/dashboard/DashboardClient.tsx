@@ -2053,6 +2053,10 @@ function BracketMatchCard({
 
   return (
     <div className={`br-match${teamsAssigned ? '' : ' ko'}`}>
+      <div className="br-date-row">
+        <span className="br-date-num">P{match.match_number}</span>
+        <span className="br-date-time">{dateStr} · {timeStr}</span>
+      </div>
       <div className={`br-slot${teamsAssigned ? '' : ' empty'}`}>
         {homeFlag && <Flag emoji={homeFlag} size={16} />}
         <span className={`br-name${teamsAssigned ? '' : ' muted'}`}>{homeTeamName}</span>
@@ -2096,7 +2100,6 @@ function BracketMatchCard({
         </div>
       )}
       <div className="br-meta">
-        P{match.match_number} · {dateStr} {timeStr} · {cityStr}
         {hasResult && pts > 0 && <PtsBadge pts={pts} />}
       </div>
     </div>
