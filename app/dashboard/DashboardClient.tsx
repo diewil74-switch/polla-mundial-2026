@@ -230,9 +230,21 @@ function InicioTab({
       .from('profiles')
       .select('*')
 
-    // Fetch pts_earned for ranking — same logic as RankingTab (computed fresh, not stale profiles.total_points)
-    const [predPtsRes, specialPtsRes, groupPosRes] = await Promise.all([
-      supabase.from('predictions').select('user_id, points_earned').eq('calculated', true),
+    // Paginate predictions pts_earned (puede superar 1000 filas con 20 usuarios × 50+ partidos)
+    let allPredPts: any[] = []
+    for (let page = 0; page < 10; page++) {
+      const { data: batch } = await supabase
+        .from('predictions')
+        .select('user_id, points_earned')
+        .eq('calculated', true)
+        .order('user_id').order('match_id')
+        .range(page * 1000, (page + 1) * 1000 - 1)
+      if (!batch || batch.length === 0) break
+      allPredPts = allPredPts.concat(batch)
+      if (batch.length < 1000) break
+    }
+
+    const [specialPtsRes, groupPosRes] = await Promise.all([
       supabase.from('special_predictions').select('user_id, points_earned'),
       supabase.from('group_position_predictions').select('user_id, group_id, team_id, predicted_position')
     ])
@@ -247,9 +259,9 @@ function InicioTab({
     if (specialData) setSpecialPredictions(specialData as SpecialPrediction[])
 
     if (allProfilesData) {
-      // Sum pts_earned per user from match predictions
+      // Sum pts_earned per user from match predictions (paginado)
       const matchPts: Record<string, number> = {}
-      predPtsRes.data?.forEach((p: any) => {
+      allPredPts.forEach((p: any) => {
         matchPts[p.user_id] = (matchPts[p.user_id] || 0) + (p.points_earned || 0)
       })
 
