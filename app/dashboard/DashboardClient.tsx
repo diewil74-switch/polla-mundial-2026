@@ -2032,7 +2032,8 @@ function BracketMatchCard({
   const awayFlag = match.away_team?.flag_emoji
   const teamsAssigned = match.home_team_id && match.away_team_id
 
-  const dateStr = matchDate.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
+  const dateStr = matchDate.toLocaleDateString('es-CO', { timeZone: 'America/Bogota', day: 'numeric', month: 'short' })
+  const timeStr = matchDate.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: 'numeric', minute: '2-digit', hour12: true })
   const cityStr = match.venue || match.city || ''
 
   const isDraw = predHome === predAway
@@ -2095,7 +2096,7 @@ function BracketMatchCard({
         </div>
       )}
       <div className="br-meta">
-        P{match.match_number} · {dateStr} · {cityStr}
+        P{match.match_number} · {dateStr} {timeStr} · {cityStr}
         {hasResult && pts > 0 && <PtsBadge pts={pts} />}
       </div>
     </div>
