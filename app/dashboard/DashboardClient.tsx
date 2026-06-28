@@ -1527,6 +1527,7 @@ function RankingTab({ currentUserId }: { currentUserId: string }) {
           points_earned,
           pred_home,
           pred_away,
+          pred_winner_team_id,
           match:matches!inner(
             id,
             phase,
@@ -1663,25 +1664,40 @@ function RankingTab({ currentUserId }: { currentUserId: string }) {
             }
           } else {
             // Knockout stage
-            const isExactScore =
-              pred.match.home_score !== null &&
-              pred.match.away_score !== null &&
-              pred.pred_home === pred.match.home_score &&
-              pred.pred_away === pred.match.away_score
+            const hasResult = pred.match.home_score !== null && pred.match.away_score !== null
 
+            // Correct result (winner or draw): +2
+            if (hasResult) {
+              const actualResult =
+                pred.match.home_score > pred.match.away_score ? 'home' :
+                pred.match.home_score < pred.match.away_score ? 'away' : 'draw'
+              const predictedResult =
+                pred.pred_home > pred.pred_away ? 'home' :
+                pred.pred_home < pred.pred_away ? 'away' : 'draw'
+              if (actualResult === predictedResult) correctResult += 2
+            }
+
+            // Correct qualifier: +3 (uses pred_winner_team_id for draw predictions)
+            const predIsDraw = pred.pred_home === pred.pred_away
             const predictedWinner =
-              pred.pred_home > pred.pred_away
-                ? pred.match.home_team_id
-                : pred.match.away_team_id
-
-            const correctWinner = predictedWinner === pred.match.winner_team_id
-
-            if (correctWinner) {
+              predIsDraw && pred.pred_winner_team_id != null
+                ? pred.pred_winner_team_id
+                : pred.pred_home > pred.pred_away
+                  ? pred.match.home_team_id
+                  : pred.match.away_team_id
+            if (predictedWinner === pred.match.winner_team_id) {
               correctQualifier += 3
             }
+
+            // Exact score: +3
+            const isExactScore = hasResult &&
+              pred.pred_home === pred.match.home_score &&
+              pred.pred_away === pred.match.away_score
             if (isExactScore) {
               exactScore += 3
             }
+
+            // Correct goals: +1 each
             if (pred.match.home_score !== null && pred.pred_home === pred.match.home_score) {
               correctGoal += 1
             }

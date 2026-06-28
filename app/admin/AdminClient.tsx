@@ -407,7 +407,7 @@ function ResultsTab() {
         for (const match of matchesWithResults) {
         const { data: predictions } = await supabase
           .from('predictions')
-          .select('user_id, pred_home, pred_away')
+          .select('user_id, pred_home, pred_away, pred_winner_team_id')
           .eq('match_id', match.id)
 
         if (predictions && predictions.length > 0) {
@@ -415,6 +415,7 @@ function ResultsTab() {
           const allPredictions = predictions.map((p) => ({
             pred_home: p.pred_home,
             pred_away: p.pred_away,
+            pred_winner_team_id: p.pred_winner_team_id,
           }))
 
           for (const pred of predictions) {
@@ -423,6 +424,7 @@ function ResultsTab() {
               {
                 pred_home: pred.pred_home,
                 pred_away: pred.pred_away,
+                pred_winner_team_id: pred.pred_winner_team_id,
               },
               allPredictions
             )
