@@ -272,8 +272,12 @@ export default function RulesPage() {
           </h2>
           <div className="space-y-3">
             <div className="flex items-center justify-between py-3">
+              <span className="text-slate-700">Ganador o empate correcto</span>
+              <span className="font-bold text-red-600 text-xl">2 pts</span>
+            </div>
+            <div className="flex items-center justify-between py-3 border-t border-slate-100">
               <span className="text-slate-700">Acertar el clasificado a la siguiente ronda</span>
-              <span className="font-bold text-red-600 text-xl">3 pts</span>
+              <span className="font-bold text-red-600 text-xl">+3 pts</span>
             </div>
             <div className="flex items-center justify-between py-3 border-t border-slate-100">
               <span className="text-slate-700">Acertar resultado exacto en 120 min</span>
