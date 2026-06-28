@@ -1866,6 +1866,7 @@ function BracketTab({ userId }: { userId: string }) {
   const [matches, setMatches] = useState<Match[]>([])
   const [predictions, setPredictions] = useState<Record<number, any>>({})
   const [loading, setLoading] = useState(true)
+  const [activeRound, setActiveRound] = useState('r32')
   const supabase = createClient()
 
   useEffect(() => {
@@ -1955,44 +1956,53 @@ function BracketTab({ userId }: { userId: string }) {
   const finalMatch = matches.find((m) => m.match_number === 104)
 
   const rounds = [
-    { key: 'r32', label: 'Dieciseisavos', matches: r32Matches },
-    { key: 'r16', label: 'Octavos', matches: r16Matches },
-    { key: 'r8', label: 'Cuartos', matches: quarterMatches },
-    { key: 'r4', label: 'Semifinales', matches: semiMatches },
-    { key: 'r3', label: 'Tercer Lugar', matches: thirdPlaceMatch ? [thirdPlaceMatch] : [] },
-    { key: 'r1', label: 'Final', matches: finalMatch ? [finalMatch] : [] }
+    { key: 'r32', label: 'Dieciseisavos', short: '16avos', matches: r32Matches },
+    { key: 'r16', label: 'Octavos', short: 'Octavos', matches: r16Matches },
+    { key: 'r8', label: 'Cuartos', short: 'Cuartos', matches: quarterMatches },
+    { key: 'r4', label: 'Semifinales', short: 'Semis', matches: semiMatches },
+    { key: 'r3', label: 'Tercer Lugar', short: '3er lugar', matches: thirdPlaceMatch ? [thirdPlaceMatch] : [] },
+    { key: 'r1', label: 'Final', short: 'Final', matches: finalMatch ? [finalMatch] : [] }
   ]
+
+  const currentRound = rounds.find(r => r.key === activeRound) ?? rounds[0]
 
   return (
     <div>
       <div className="section-head">
         <div className="h-left">
           <h1><span className="accent">Eliminatorias</span></h1>
-          <p>El cuadro completo desde Dieciseisavos hasta la Final. Los cruces se rellenan automáticamente cuando termine la fase de grupos (28 jun).</p>
-        </div>
-        <div className="legend">
-          <div className="li"><span className="dot" style={{ background: "var(--accent)" }}></span> Equipos por definir</div>
+          <p>El cuadro completo desde Dieciseisavos hasta la Final.</p>
         </div>
       </div>
 
-      <div className="bracket-scroll">
-        <div className="bracket">
-          {rounds.map((r) => (
-            <div className={`br-col br-${r.key}`} key={r.key}>
-              <div className="br-col-head">{r.label} <span className="brc-n">{r.matches.length}</span></div>
-              <div className="br-col-body">
-                {r.matches.map((match) => (
-                  <BracketMatchCard
-                    key={match.id}
-                    match={match}
-                    prediction={predictions[match.id]}
-                    onSavePrediction={savePrediction}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="br-round-tabs">
+        {rounds.map(r => (
+          <button
+            key={r.key}
+            className={`br-round-tab${activeRound === r.key ? ' active' : ''}`}
+            onClick={() => setActiveRound(r.key)}
+          >
+            {r.short}
+            <span className="br-round-tab-n">{r.matches.length}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="br-round-grid">
+        {currentRound.matches.length === 0 ? (
+          <p style={{ color: 'var(--muted)', fontSize: 13, padding: '16px 0' }}>
+            Los cruces se definirán cuando avancen las rondas anteriores.
+          </p>
+        ) : (
+          currentRound.matches.map(match => (
+            <BracketMatchCard
+              key={match.id}
+              match={match}
+              prediction={predictions[match.id]}
+              onSavePrediction={savePrediction}
+            />
+          ))
+        )}
       </div>
     </div>
   )

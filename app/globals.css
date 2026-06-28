@@ -262,6 +262,15 @@ body {
 .br-col { display: flex; flex-direction: column; min-width: 168px; flex: 1; }
 .br-col-head { font-family: var(--font-display); font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); text-align: center; margin-bottom: 12px; }
 .br-col-body { display: flex; flex-direction: column; justify-content: space-around; align-items: stretch; flex: 1; gap: 14px; }
+/* Round tabs */
+.br-round-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+.br-round-tab { appearance: none; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 7px 13px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--surface-2); color: var(--muted); font-family: var(--font-body); font-size: 12.5px; font-weight: 700; transition: all .15s; }
+.br-round-tab:hover { border-color: var(--accent); color: var(--text); }
+.br-round-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.br-round-tab-n { font-size: 10px; font-weight: 800; opacity: .75; }
+/* Round grid */
+.br-round-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+@media (max-width: 500px) { .br-round-grid { grid-template-columns: 1fr; } }
 .br-match { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
 .br-slot { appearance: none; width: 100%; display: flex; align-items: center; gap: 8px; padding: 10px 11px; border: 0; background: transparent; color: var(--text); cursor: pointer; font-family: var(--font-body); font-weight: 600; font-size: 12.5px; text-align: left; transition: background .12s; }
 .br-slot + .br-slot { border-top: 1px solid var(--border); }
