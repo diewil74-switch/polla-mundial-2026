@@ -230,6 +230,13 @@ function InicioTab({
       .from('profiles')
       .select('*')
 
+    // Fetch pts_earned for ranking — same logic as RankingTab (computed fresh, not stale profiles.total_points)
+    const [predPtsRes, specialPtsRes, groupPosRes] = await Promise.all([
+      supabase.from('predictions').select('user_id, points_earned').eq('calculated', true),
+      supabase.from('special_predictions').select('user_id, points_earned'),
+      supabase.from('group_position_predictions').select('user_id, group_id, team_id, predicted_position')
+    ])
+
     if (matchesData) setMatches(matchesData as Match[])
     if (allMatchesData) setAllMatches(allMatchesData as Match[])
     if (predsData) {
@@ -238,8 +245,74 @@ function InicioTab({
       setPredictions(predMap)
     }
     if (specialData) setSpecialPredictions(specialData as SpecialPrediction[])
+
     if (allProfilesData) {
-      const ranked = [...allProfilesData].sort((a: any, b: any) => b.total_points - a.total_points)
+      // Sum pts_earned per user from match predictions
+      const matchPts: Record<string, number> = {}
+      predPtsRes.data?.forEach((p: any) => {
+        matchPts[p.user_id] = (matchPts[p.user_id] || 0) + (p.points_earned || 0)
+      })
+
+      // Sum pts_earned per user from special predictions
+      const specialPts: Record<string, number> = {}
+      specialPtsRes.data?.forEach((p: any) => {
+        specialPts[p.user_id] = (specialPts[p.user_id] || 0) + (p.points_earned || 0)
+      })
+
+      // Compute dynamic group standings from completed matches
+      const completedGroupMatches = allMatchesData?.filter(
+        (m: any) => m.phase === 'groups' && m.home_score !== null && m.away_score !== null
+      ) || []
+      const dynamicStandings = new Map<string, Array<{ team_id: number; position: number }>>()
+      'ABCDEFGHIJKL'.split('').forEach(groupId => {
+        const gMatches = completedGroupMatches.filter((m: any) => m.group_id === groupId)
+        if (gMatches.length < 6) return
+        const teamStats: Record<number, { pts: number; gf: number; gc: number }> = {}
+        gMatches.forEach((m: any) => {
+          if (!teamStats[m.home_team_id]) teamStats[m.home_team_id] = { pts: 0, gf: 0, gc: 0 }
+          if (!teamStats[m.away_team_id]) teamStats[m.away_team_id] = { pts: 0, gf: 0, gc: 0 }
+          teamStats[m.home_team_id].gf += m.home_score
+          teamStats[m.home_team_id].gc += m.away_score
+          teamStats[m.away_team_id].gf += m.away_score
+          teamStats[m.away_team_id].gc += m.home_score
+          if (m.home_score > m.away_score) teamStats[m.home_team_id].pts += 3
+          else if (m.home_score < m.away_score) teamStats[m.away_team_id].pts += 3
+          else { teamStats[m.home_team_id].pts += 1; teamStats[m.away_team_id].pts += 1 }
+        })
+        dynamicStandings.set(groupId, Object.entries(teamStats)
+          .map(([tid, s]) => ({ team_id: Number(tid), pts: s.pts, gf: s.gf, gd: s.gf - s.gc }))
+          .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf)
+          .map((t, i) => ({ team_id: t.team_id, position: i + 1 })))
+      })
+
+      // Compute group order bonus per user
+      const groupBonusPts: Record<string, number> = {}
+      if (groupPosRes.data) {
+        for (const profile of allProfilesData) {
+          let bonus = 0
+          const userPosPreds = groupPosRes.data.filter((pp: any) => pp.user_id === profile.id)
+          'ABCDEFGHIJKL'.split('').forEach(groupId => {
+            const gs = dynamicStandings.get(groupId)
+            if (!gs) return
+            const gpp = userPosPreds.filter((pp: any) => pp.group_id === groupId)
+            if (gpp.length < 4) return
+            let allMatch = true
+            for (let pos = 1; pos <= 4; pos++) {
+              const realTeamId = gs.find(s => s.position === pos)?.team_id
+              const predTeamId = gpp.find((pp: any) => pp.predicted_position === pos)?.team_id
+              if (!realTeamId || !predTeamId || realTeamId !== predTeamId) { allMatch = false; break }
+            }
+            if (allMatch) bonus += 3
+          })
+          groupBonusPts[profile.id] = bonus
+        }
+      }
+
+      const withTotals = allProfilesData.map((p: any) => ({
+        ...p,
+        total_points: (matchPts[p.id] || 0) + (specialPts[p.id] || 0) + (groupBonusPts[p.id] || 0)
+      }))
+      const ranked = [...withTotals].sort((a: any, b: any) => b.total_points - a.total_points)
       setRanking(ranked as Profile[])
     }
     setLoading(false)
