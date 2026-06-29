@@ -1221,6 +1221,7 @@ function GroupsTab({ userId }: { userId: string }) {
       )
     }
     if (standingsRes.data) setRealStandings(standingsRes.data)
+    console.log('[Grupos] positionPredsRes data:', positionPredsRes.data?.length, 'error:', positionPredsRes.error?.message)
     if (positionPredsRes.data) setPositionPredictions(positionPredsRes.data)
     if (firstMatchesRes.data) {
       const firstDates: Record<string, Date> = {}
