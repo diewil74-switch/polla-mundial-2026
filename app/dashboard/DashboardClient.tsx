@@ -1560,36 +1560,6 @@ function RankingTab({ currentUserId }: { currentUserId: string }) {
       if (batch.length < 1000) break
     }
 
-    // Compute group standings dynamically from completed matches
-    const { data: completedGroupMatches } = await supabase
-      .from('matches')
-      .select('group_id, home_team_id, away_team_id, home_score, away_score')
-      .eq('phase', 'groups')
-      .not('home_score', 'is', null)
-      .not('away_score', 'is', null)
-
-    const dynamicStandings = new Map<string, Array<{team_id: number, position: number}>>()
-    'ABCDEFGHIJKL'.split('').forEach(groupId => {
-      const gMatches = completedGroupMatches?.filter((m: any) => m.group_id === groupId) || []
-      if (gMatches.length < 6) return
-      const teamStats: Record<number, {pts: number, gf: number, gc: number}> = {}
-      gMatches.forEach((m: any) => {
-        if (!teamStats[m.home_team_id]) teamStats[m.home_team_id] = {pts: 0, gf: 0, gc: 0}
-        if (!teamStats[m.away_team_id]) teamStats[m.away_team_id] = {pts: 0, gf: 0, gc: 0}
-        teamStats[m.home_team_id].gf += m.home_score
-        teamStats[m.home_team_id].gc += m.away_score
-        teamStats[m.away_team_id].gf += m.away_score
-        teamStats[m.away_team_id].gc += m.home_score
-        if (m.home_score > m.away_score) teamStats[m.home_team_id].pts += 3
-        else if (m.home_score < m.away_score) teamStats[m.away_team_id].pts += 3
-        else { teamStats[m.home_team_id].pts += 1; teamStats[m.away_team_id].pts += 1 }
-      })
-      dynamicStandings.set(groupId, Object.entries(teamStats)
-        .map(([tid, s]) => ({team_id: Number(tid), pts: s.pts, gf: s.gf, gd: s.gf - s.gc}))
-        .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf)
-        .map((t, i) => ({team_id: t.team_id, position: i + 1})))
-    })
-
     // Group predictions by match_id to identify unique exact scores
     const predictionsByMatch = new Map<number, any[]>()
     allPredictions?.forEach((pred: any) => {
@@ -1620,11 +1590,13 @@ function RankingTab({ currentUserId }: { currentUserId: string }) {
       }
     })
 
-    // Get all teams for group standings calculation
-    const { data: allTeams } = await supabase
-      .from('teams')
-      .select('*')
-      .order('group_id')
+    // Fetch group bonuses from server API (bypasses RLS on group_position_predictions)
+    const rankingApiRes = await fetch('/api/ranking')
+    const rankingApiData: Array<{ id: string; group_bonus: number }> = rankingApiRes.ok
+      ? await rankingApiRes.json()
+      : []
+    const groupBonusByUser: Record<string, number> = {}
+    rankingApiData.forEach(r => { groupBonusByUser[r.id] = r.group_bonus || 0 })
 
     // For each profile, get their point breakdown
     const profilesWithBreakdown = await Promise.all(
@@ -1723,32 +1695,8 @@ function RankingTab({ currentUserId }: { currentUserId: string }) {
         // Calculate unique prediction bonus (5 points per unique exact score)
         uniquePredictions = (uniquePredictionUsers.get(profile.id) || 0) * 5
 
-        // Calculate group order bonus (3 pts per group if all 4 manual positions match real standings)
-        const { data: userPositionPredictions } = await supabase
-          .from('group_position_predictions')
-          .select('group_id, team_id, predicted_position')
-          .eq('user_id', profile.id)
-
-        'ABCDEFGHIJKL'.split('').forEach((groupId) => {
-          const groupStandings = dynamicStandings.get(groupId)
-          if (!groupStandings) return
-
-          const groupPosPreds = userPositionPredictions?.filter(
-            (pp: any) => pp.group_id === groupId
-          ) || []
-          if (groupPosPreds.length < 4) return
-
-          let allMatch = true
-          for (let position = 1; position <= 4; position++) {
-            const realTeamId = groupStandings.find(s => s.position === position)?.team_id
-            const predTeamId = groupPosPreds.find((pp: any) => pp.predicted_position === position)?.team_id
-            if (!realTeamId || !predTeamId || realTeamId !== predTeamId) {
-              allMatch = false
-              break
-            }
-          }
-          if (allMatch) groupOrderBonus += 3
-        })
+        // Group order bonus — sourced from /api/ranking which uses service role (bypasses RLS)
+        groupOrderBonus = groupBonusByUser[profile.id] || 0
 
         // Get special predictions points by type
         const champion = specialPreds?.find(sp => sp.type === 'champion')?.points_earned || 0

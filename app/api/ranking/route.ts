@@ -101,6 +101,7 @@ export async function GET() {
     .map(u => ({
       id: u.id,
       display_name: u.display_name,
+      group_bonus: groupBonusPts[u.id] || 0,
       total_points: (matchPts[u.id] || 0) + (specialPts[u.id] || 0) + (groupBonusPts[u.id] || 0),
     }))
     .sort((a, b) => b.total_points - a.total_points)
