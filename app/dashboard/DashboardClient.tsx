@@ -2140,6 +2140,9 @@ function BracketMatchCard({
       )}
       <div className="br-meta">
         {hasResult && pts > 0 && <PtsBadge pts={pts} />}
+        {!canEdit && !prediction && teamsAssigned && (
+          <span style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic' }}>Sin predicción</span>
+        )}
       </div>
     </div>
   )
