@@ -416,7 +416,7 @@ function InicioTab({
               <div className="ct">⏱️ Próximos partidos</div>
               <div className="cs">Aún puedes editar tu marcador</div>
             </div>
-            <button className="btn-ghost sm" onClick={() => onNavigate('predictions')}>
+            <button className="btn-ghost sm" onClick={() => onNavigate('bracket')}>
               Predecir →
             </button>
           </div>
