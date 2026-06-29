@@ -2841,10 +2841,13 @@ function ResultadosTab({ currentUserId }: { currentUserId: string }) {
       }
 
       // Knockout phase: group by round
+      // Phases in DB: r16=Dieciseisavos(#73-88), r8=Octavos(#89-96),
+      //               r4=Cuartos(#97-100), sf=Semis(#101-102), 3rd, final
       const knockoutRounds: Record<string, { label: string; matches: any[] }> = {
-        r16: { label: 'Octavos de final', matches: [] },
-        r8: { label: 'Cuartos de final', matches: [] },
-        r4: { label: 'Semifinales', matches: [] },
+        r16: { label: 'Dieciseisavos de final', matches: [] },
+        r8: { label: 'Octavos de final', matches: [] },
+        r4: { label: 'Cuartos de final', matches: [] },
+        sf: { label: 'Semifinales', matches: [] },
         '3rd': { label: 'Tercer puesto', matches: [] },
         final: { label: 'Final', matches: [] },
       }
@@ -2909,7 +2912,7 @@ function ResultadosTab({ currentUserId }: { currentUserId: string }) {
     if (phaseFilter === 'j1') return phase.key === 'jornada-1'
     if (phaseFilter === 'j2') return phase.key === 'jornada-2'
     if (phaseFilter === 'j3') return phase.key === 'jornada-3'
-    if (phaseFilter === 'eliminatorias') return ['r16', 'r8', 'r4', '3rd', 'final'].includes(phase.key)
+    if (phaseFilter === 'eliminatorias') return ['r16', 'r8', 'r4', 'sf', '3rd', 'final'].includes(phase.key)
     return true
   })
 
