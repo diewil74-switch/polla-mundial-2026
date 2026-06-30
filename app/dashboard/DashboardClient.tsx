@@ -2087,18 +2087,15 @@ function BracketMatchCard({
           </button>
         </div>
       )}
-      {!canEdit && prediction && teamsAssigned && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', padding: '4px 0', borderTop: '1px solid #e2e8f0', marginTop: '2px' }}>
-          <span style={{ color: '#64748b' }}>Tu pred.</span>
-          <span style={{ fontWeight: 700, color: '#1e293b', fontVariantNumeric: 'tabular-nums' }}>
-            {prediction.pred_home}–{prediction.pred_away}
+      <div className="br-meta" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        {!canEdit && prediction && teamsAssigned && (
+          <span>
+            Tu pred.&nbsp;<strong style={{ fontVariantNumeric: 'tabular-nums' }}>{prediction.pred_home}–{prediction.pred_away}</strong>
           </span>
-        </div>
-      )}
-      <div className="br-meta">
+        )}
         {hasResult && pts > 0 && <PtsBadge pts={pts} />}
         {!canEdit && !prediction && teamsAssigned && (
-          <span style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic' }}>Sin predicción</span>
+          <span style={{ fontStyle: 'italic' }}>Sin predicción</span>
         )}
       </div>
     </div>
