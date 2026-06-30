@@ -617,6 +617,8 @@ function BracketTab() {
   const [teams, setTeams] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<number | null>(null)
+  const [syncing, setSyncing] = useState(false)
+  const [syncResult, setSyncResult] = useState<{ ok: boolean; message: string } | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -806,7 +808,7 @@ function BracketTab() {
   // Lookup tables for real World Cup 2026 bracket progression
   const NEXT_MATCH: Record<number, number> = {
     // R32 → Octavos
-    73: 90, 74: 89, 75: 90, 76: 91, 77: 89, 78: 91,
+    73: 90, 74: 91, 75: 89, 76: 90, 77: 89, 78: 91,
     79: 92, 80: 92, 81: 94, 82: 94, 83: 93, 84: 93,
     85: 96, 86: 95, 87: 96, 88: 95,
     // Octavos → Cuartos
@@ -820,7 +822,7 @@ function BracketTab() {
 
   const POSITION_IN_NEXT: Record<number, 'home' | 'away'> = {
     // R32 → Octavos
-    73: 'home', 74: 'home', 75: 'away', 76: 'home', 77: 'away', 78: 'away',
+    73: 'home', 74: 'home', 75: 'home', 76: 'away', 77: 'away', 78: 'away',
     79: 'home', 80: 'away', 81: 'home', 82: 'away', 83: 'home', 84: 'away',
     85: 'home', 86: 'home', 87: 'away', 88: 'away',
     // Octavos → Cuartos
@@ -838,6 +840,25 @@ function BracketTab() {
 
   function getPositionInNextMatch(currentMatchNumber: number): 'home' | 'away' {
     return POSITION_IN_NEXT[currentMatchNumber] ?? 'home'
+  }
+
+  async function syncBracket() {
+    setSyncing(true)
+    setSyncResult(null)
+    try {
+      const res = await fetch('/api/admin/sync-bracket', { method: 'POST' })
+      const data = await res.json()
+      if (data.ok) {
+        setSyncResult({ ok: true, message: `Sincronizado: ${data.updated}/${data.total} partidos actualizados.${data.warnings?.length ? ` Avisos: ${data.warnings.join('; ')}` : ''}` })
+        loadData()
+      } else {
+        setSyncResult({ ok: false, message: data.error ?? 'Error desconocido' })
+      }
+    } catch (e: any) {
+      setSyncResult({ ok: false, message: e.message })
+    } finally {
+      setSyncing(false)
+    }
   }
 
   if (loading) return <div className="text-center py-12">Cargando...</div>
@@ -858,6 +879,21 @@ function BracketTab() {
         <p className="text-sm text-yellow-800">
           <strong>Instrucciones:</strong> Para cada partido, puedes asignar manualmente el equipo clasificado usando el menú desplegable, o usar el botón "Auto-completar desde resultado" si ya hay resultado registrado.
         </p>
+      </div>
+
+      <div className="flex items-center gap-4 flex-wrap">
+        <button
+          onClick={syncBracket}
+          disabled={syncing}
+          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {syncing ? 'Sincronizando...' : 'Sincronizar Bracket desde API'}
+        </button>
+        {syncResult && (
+          <span className={`text-sm ${syncResult.ok ? 'text-green-700' : 'text-red-700'}`}>
+            {syncResult.message}
+          </span>
+        )}
       </div>
 
       <div className="space-y-8">
