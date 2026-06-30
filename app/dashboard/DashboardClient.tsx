@@ -2087,6 +2087,14 @@ function BracketMatchCard({
           </button>
         </div>
       )}
+      {!canEdit && prediction && teamsAssigned && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', padding: '4px 0', borderTop: '1px solid #e2e8f0', marginTop: '2px' }}>
+          <span style={{ color: '#64748b' }}>Tu pred.</span>
+          <span style={{ fontWeight: 700, color: '#1e293b', fontVariantNumeric: 'tabular-nums' }}>
+            {prediction.pred_home}–{prediction.pred_away}
+          </span>
+        </div>
+      )}
       <div className="br-meta">
         {hasResult && pts > 0 && <PtsBadge pts={pts} />}
         {!canEdit && !prediction && teamsAssigned && (
