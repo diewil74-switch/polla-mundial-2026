@@ -26,15 +26,11 @@ export async function POST(request: Request) {
     for (const u of updates) {
       const payload: Record<string, any> = {}
 
-      if (u.home_team_id !== null) payload.home_team_id = u.home_team_id
-      if (u.away_team_id !== null) payload.away_team_id = u.away_team_id
-
-      if (u.is_finished) {
-        anyFinished = true
-        if (u.home_score !== null) payload.home_score = u.home_score
-        if (u.away_score !== null) payload.away_score = u.away_score
-        if (u.winner_team_id !== null) payload.winner_team_id = u.winner_team_id
-      }
+      if (u.home_team_id !== undefined) payload.home_team_id = u.home_team_id
+      if (u.away_team_id !== undefined) payload.away_team_id = u.away_team_id
+      if (u.home_score !== undefined) { payload.home_score = u.home_score; anyFinished = true }
+      if (u.away_score !== undefined) { payload.away_score = u.away_score; anyFinished = true }
+      if (u.winner_team_id !== undefined) payload.winner_team_id = u.winner_team_id
 
       if (Object.keys(payload).length === 0) continue
 
@@ -47,7 +43,6 @@ export async function POST(request: Request) {
       else updated++
     }
 
-    // Recalculate all user points if any finished matches were updated
     if (anyFinished) {
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
       await fetch(`${siteUrl}/api/admin/recalculate-points`, {
