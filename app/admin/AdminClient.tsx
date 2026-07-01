@@ -808,7 +808,7 @@ function BracketTab() {
   // Lookup tables for real World Cup 2026 bracket progression
   const NEXT_MATCH: Record<number, number> = {
     // R32 → Octavos
-    73: 90, 74: 91, 75: 89, 76: 90, 77: 89, 78: 91,
+    73: 90, 74: 91, 75: 89, 76: 90, 77: 91, 78: 89,
     79: 92, 80: 92, 81: 94, 82: 94, 83: 93, 84: 93,
     85: 96, 86: 95, 87: 96, 88: 95,
     // Octavos → Cuartos
