@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { fetchBracketUpdates } from '@/lib/sync-bracket'
+import { fetchApiFixtures, NEXT_MATCH, POSITION_IN_NEXT } from '@/lib/sync-bracket'
 
 export async function POST(request: Request) {
   const supabaseUser = await createServerClient()
@@ -17,29 +17,103 @@ export async function POST(request: Request) {
   )
 
   try {
-    const { updates, summary, warnings } = await fetchBracketUpdates()
+    const { last32, knockout, warnings } = await fetchApiFixtures()
 
+    // Fetch DB dieciseisavos to match by team IDs (not by UTC time)
+    const { data: r32DbMatches } = await supabase
+      .from('matches')
+      .select('match_number, home_team_id, away_team_id')
+      .gte('match_number', 73)
+      .lte('match_number', 88)
+
+    // Updates accumulator: match_number → fields to update
+    const updatesMap = new Map<number, Record<string, any>>()
+    const summary: string[] = []
+    const allWarnings = [...warnings]
+
+    function addUpdate(mn: number, fields: Record<string, any>) {
+      updatesMap.set(mn, { ...(updatesMap.get(mn) ?? {}), ...fields })
+    }
+
+    // Process LAST_32: match API fixture to DB match by team IDs, then propagate winner
+    for (const f of last32) {
+      if (!f.isFinished) continue
+      if (f.homeTeamId === null && f.awayTeamId === null) continue
+
+      // Find which DB match has these two teams (in either order)
+      const dbMatch = r32DbMatches?.find(m =>
+        (m.home_team_id === f.homeTeamId && m.away_team_id === f.awayTeamId) ||
+        (m.home_team_id === f.awayTeamId && m.away_team_id === f.homeTeamId)
+      )
+
+      if (!dbMatch) {
+        allWarnings.push(`LAST_32: sin partido en DB para "${f.homeTeamName}" vs "${f.awayTeamName}"`)
+        continue
+      }
+
+      const mn = dbMatch.match_number
+      const isFlipped = dbMatch.home_team_id === f.awayTeamId
+
+      // Update dieciseisavo score (respecting DB home/away order)
+      const dbHomeScore = isFlipped ? f.awayScore : f.homeScore
+      const dbAwayScore = isFlipped ? f.homeScore : f.awayScore
+      const winnerId = f.winnerIsApiHome
+        ? (isFlipped ? f.awayTeamId : f.homeTeamId)
+        : f.winnerIsApiHome === false
+        ? (isFlipped ? f.homeTeamId : f.awayTeamId)
+        : null
+
+      if (dbHomeScore !== null) addUpdate(mn, { home_score: dbHomeScore })
+      if (dbAwayScore !== null) addUpdate(mn, { away_score: dbAwayScore })
+      if (winnerId !== null) addUpdate(mn, { winner_team_id: winnerId })
+      summary.push(`P${mn}: ${f.homeTeamName} vs ${f.awayTeamName} [${f.homeScore}-${f.awayScore}]`)
+
+      // Propagate winner to next match
+      if (winnerId !== null) {
+        const nextMn = NEXT_MATCH[mn]
+        const pos = POSITION_IN_NEXT[mn]
+        if (nextMn && pos) {
+          addUpdate(nextMn, pos === 'home' ? { home_team_id: winnerId } : { away_team_id: winnerId })
+        }
+      }
+    }
+
+    // Process LAST_16+ (Octavos, Cuartos, Semis, Final)
+    for (const f of knockout) {
+      if (f.homeTeamId !== null) addUpdate(f.matchNumber, { home_team_id: f.homeTeamId })
+      if (f.awayTeamId !== null) addUpdate(f.matchNumber, { away_team_id: f.awayTeamId })
+
+      if (f.isFinished) {
+        if (f.homeScore !== null) addUpdate(f.matchNumber, { home_score: f.homeScore })
+        if (f.awayScore !== null) addUpdate(f.matchNumber, { away_score: f.awayScore })
+        if (f.winnerId !== null) {
+          addUpdate(f.matchNumber, { winner_team_id: f.winnerId })
+          const nextMn = NEXT_MATCH[f.matchNumber]
+          const pos = POSITION_IN_NEXT[f.matchNumber]
+          if (nextMn && pos) {
+            addUpdate(nextMn, pos === 'home' ? { home_team_id: f.winnerId } : { away_team_id: f.winnerId })
+          }
+        }
+      }
+
+      summary.push(`P${f.matchNumber}: ${f.isFinished ? `[${f.homeScore}-${f.awayScore}]` : '[Por jugar]'}`)
+    }
+
+    // Apply all updates to DB
     let updated = 0
     const dbErrors: string[] = []
     let anyFinished = false
 
-    for (const u of updates) {
-      const payload: Record<string, any> = {}
-
-      if (u.home_team_id !== undefined) payload.home_team_id = u.home_team_id
-      if (u.away_team_id !== undefined) payload.away_team_id = u.away_team_id
-      if (u.home_score !== undefined) { payload.home_score = u.home_score; anyFinished = true }
-      if (u.away_score !== undefined) { payload.away_score = u.away_score; anyFinished = true }
-      if (u.winner_team_id !== undefined) payload.winner_team_id = u.winner_team_id
-
+    for (const [mn, payload] of updatesMap.entries()) {
       if (Object.keys(payload).length === 0) continue
+      if ('home_score' in payload || 'away_score' in payload) anyFinished = true
 
       const { error } = await supabase
         .from('matches')
         .update(payload)
-        .eq('match_number', u.match_number)
+        .eq('match_number', mn)
 
-      if (error) dbErrors.push(`P${u.match_number}: ${error.message}`)
+      if (error) dbErrors.push(`P${mn}: ${error.message}`)
       else updated++
     }
 
@@ -54,9 +128,9 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       updated,
-      total: updates.length,
+      total: updatesMap.size,
       summary,
-      warnings: [...warnings, ...dbErrors],
+      warnings: [...allWarnings, ...dbErrors],
     })
   } catch (err: any) {
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 })
