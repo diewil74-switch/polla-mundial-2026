@@ -36,7 +36,7 @@ export const TEAM_TO_ID: Record<string, number> = {
 export const NEXT_MATCH: Record<number, number> = {
   73: 90, 74: 91, 75: 89, 76: 90, 77: 91, 78: 89,
   79: 92, 80: 92, 81: 94, 82: 94, 83: 93, 84: 93,
-  85: 96, 86: 95, 87: 96, 88: 95,
+  85: 95, 86: 96, 87: 96, 88: 95,
   89: 97, 90: 97, 91: 99, 92: 99,
   93: 98, 94: 98, 95: 100, 96: 100,
   97: 101, 98: 101, 99: 102, 100: 102,
@@ -46,7 +46,7 @@ export const NEXT_MATCH: Record<number, number> = {
 export const POSITION_IN_NEXT: Record<number, 'home' | 'away'> = {
   73: 'home', 74: 'home', 75: 'home', 76: 'away', 77: 'away', 78: 'away',
   79: 'home', 80: 'away', 81: 'home', 82: 'away', 83: 'home', 84: 'away',
-  85: 'home', 86: 'home', 87: 'away', 88: 'away',
+  85: 'home', 86: 'away', 87: 'home', 88: 'away',
   89: 'home', 90: 'away', 91: 'home', 92: 'away',
   93: 'home', 94: 'away', 95: 'home', 96: 'away',
   97: 'home', 98: 'away', 99: 'home', 100: 'away',
