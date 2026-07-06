@@ -3851,6 +3851,47 @@ function EstadisticasTab() {
             })}
         </div>
       </div>
+
+      {/* Tabla MVP y Goleador por usuario */}
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden" style={{ marginTop: '1.5rem' }}>
+        <div className="px-6 py-4 border-b border-slate-200">
+          <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">MVP y Goleador escogidos por cada participante</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="px-4 py-3 text-left font-semibold text-slate-600">Participante</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600">MVP del Mundial</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600">Goleador</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(data.allUsers ?? [])
+                .slice()
+                .sort((a: any, b: any) => a.display_name.localeCompare(b.display_name))
+                .map((user: any) => {
+                  const parseName = (type: string) => {
+                    const pred = latestPredsByUserAndType[`${user.id}-${type}`]
+                    if (!pred?.value) return <span className="text-slate-300">—</span>
+                    try {
+                      const p = typeof pred.value === 'string' ? JSON.parse(pred.value) : pred.value
+                      if (p.first_name && p.last_name) return <span>{p.first_name} {p.last_name}</span>
+                    } catch {}
+                    return <span>{pred.value}</span>
+                  }
+                  return (
+                    <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="px-4 py-3 font-medium text-slate-800">{user.display_name}</td>
+                      <td className="px-4 py-3 text-slate-700">{parseName('mvp')}</td>
+                      <td className="px-4 py-3 text-slate-700">{parseName('top_scorer')}</td>
+                    </tr>
+                  )
+                })}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   )
 }
