@@ -99,12 +99,13 @@ export async function POST(request: Request) {
       summary.push(`P${f.matchNumber}: ${f.isFinished ? `[${f.homeScore}-${f.awayScore}]` : '[Por jugar]'}`)
     }
 
-    // Apply all updates to DB
+    // Apply all updates to DB (P73-P95 already correct — skip to avoid overwrites)
     let updated = 0
     const dbErrors: string[] = []
     let anyFinished = false
 
     for (const [mn, payload] of updatesMap.entries()) {
+      if (mn < 96) continue  // partidos anteriores a P96 ya están correctamente configurados
       if (Object.keys(payload).length === 0) continue
       if ('home_score' in payload || 'away_score' in payload) anyFinished = true
 
