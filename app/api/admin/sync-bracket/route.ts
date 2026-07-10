@@ -105,7 +105,7 @@ export async function POST(request: Request) {
     let anyFinished = false
 
     for (const [mn, payload] of updatesMap.entries()) {
-      if (mn < 96) continue  // partidos anteriores a P96 ya están correctamente configurados
+      if (mn <= 96) continue  // P73-P96 ya están correctamente configurados (octavos y 16avos terminados)
       if (Object.keys(payload).length === 0) continue
       if ('home_score' in payload || 'away_score' in payload) anyFinished = true
 
