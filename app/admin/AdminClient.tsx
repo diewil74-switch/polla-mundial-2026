@@ -1726,6 +1726,7 @@ function RankingTab() {
 function SpecialsTab() {
   const [teams, setTeams] = useState<any[]>([])
   const [saving, setSaving] = useState(false)
+  const [playerPicks, setPlayerPicks] = useState<{ topScorer: any[], mvp: any[] }>({ topScorer: [], mvp: [] })
   const [actualResults, setActualResults] = useState({
     champion: '',
     runner_up: '',
@@ -1788,6 +1789,41 @@ function SpecialsTab() {
         }))
       }
     } catch {}
+
+    // Cargar lista de jugadores predichos por todos los usuarios
+    const { data: allSpecialPreds } = await supabase
+      .from('special_predictions')
+      .select('type, value, user_id')
+      .in('type', ['top_scorer', 'mvp'])
+
+    if (allSpecialPreds) {
+      const scorerPicks: Record<string, Set<string>> = {}
+      const mvpPicks: Record<string, Set<string>> = {}
+
+      allSpecialPreds.forEach((pred: any) => {
+        if (!pred.value) return
+        try {
+          const player = JSON.parse(pred.value)
+          if (!player.first_name || !player.last_name) return
+          const norm = (s: string) => s.trim().replace(/\s+/g, ' ').toLowerCase()
+          const key = `${norm(player.first_name)} ${norm(player.last_name)}|${(player.country ?? '').trim()}`
+          const bucket = pred.type === 'top_scorer' ? scorerPicks : mvpPicks
+          if (!bucket[key]) bucket[key] = new Set()
+          bucket[key].add(pred.user_id)
+        } catch {}
+      })
+
+      const cap = (s: string) => s.replace(/\b\w/g, (c: string) => c.toUpperCase())
+      const toList = (picks: Record<string, Set<string>>) =>
+        Object.entries(picks)
+          .sort(([, a], [, b]) => b.size - a.size)
+          .map(([key, users]) => {
+            const [name, country] = key.split('|')
+            return { name: cap(name), country, count: users.size }
+          })
+
+      setPlayerPicks({ topScorer: toList(scorerPicks), mvp: toList(mvpPicks) })
+    }
   }
 
   async function saveSpecialResults() {
@@ -1892,6 +1928,33 @@ function SpecialsTab() {
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 🌟 Mejor Jugador - MVP
               </label>
+              {playerPicks.mvp.length > 0 && (
+                <div className="mb-2">
+                  <p className="text-xs text-slate-500 mb-1">Predicciones de los participantes (click para seleccionar):</p>
+                  <div className="flex flex-wrap gap-2">
+                    {playerPicks.mvp.map((pick, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          const [firstName, ...rest] = pick.name.split(' ')
+                          setActualResults(prev => ({
+                            ...prev,
+                            mvp_first_name: firstName,
+                            mvp_last_name: rest.join(' '),
+                            mvp_country: pick.country,
+                          }))
+                        }}
+                        className="px-3 py-1 bg-slate-100 hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-full text-sm transition-colors"
+                      >
+                        <span className="font-semibold text-slate-800">{pick.name}</span>
+                        <span className="text-slate-500 ml-1">({pick.country})</span>
+                        <span className="text-slate-400 ml-1 text-xs">×{pick.count}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-3 gap-2">
                 <input
                   type="text"
@@ -1926,6 +1989,33 @@ function SpecialsTab() {
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 ⚽ Máximo Goleador
               </label>
+              {playerPicks.topScorer.length > 0 && (
+                <div className="mb-2">
+                  <p className="text-xs text-slate-500 mb-1">Predicciones de los participantes (click para seleccionar):</p>
+                  <div className="flex flex-wrap gap-2">
+                    {playerPicks.topScorer.map((pick, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          const [firstName, ...rest] = pick.name.split(' ')
+                          setActualResults(prev => ({
+                            ...prev,
+                            top_scorer_first_name: firstName,
+                            top_scorer_last_name: rest.join(' '),
+                            top_scorer_country: pick.country,
+                          }))
+                        }}
+                        className="px-3 py-1 bg-slate-100 hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-full text-sm transition-colors"
+                      >
+                        <span className="font-semibold text-slate-800">{pick.name}</span>
+                        <span className="text-slate-500 ml-1">({pick.country})</span>
+                        <span className="text-slate-400 ml-1 text-xs">×{pick.count}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-3 gap-2">
                 <input
                   type="text"
