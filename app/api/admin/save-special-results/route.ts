@@ -15,7 +15,6 @@ export async function POST(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // MVP and top scorer come from the request body (manual input)
   const body = await request.json().catch(() => ({}))
   const mvpFirstName: string = body.mvp_first_name ?? ''
   const mvpLastName: string = body.mvp_last_name ?? ''
@@ -24,34 +23,52 @@ export async function POST(request: Request) {
   const topScorerLastName: string = body.top_scorer_last_name ?? ''
   const topScorerCountry: string = body.top_scorer_country ?? ''
 
-  // Auto-derive champion/runner_up/third_place from match results
+  // Derivar campeón/sub/tercero desde P103 y P104 — queries separadas para evitar joins problemáticos
   const { data: keyMatches } = await supabase
     .from('matches')
-    .select('match_number, home_team_id, away_team_id, winner_team_id, home_team:home_team_id(name), away_team:away_team_id(name), winner_team:winner_team_id(name)')
+    .select('match_number, home_team_id, away_team_id, winner_team_id')
     .in('match_number', [103, 104])
 
   const finalM = keyMatches?.find((m: any) => m.match_number === 104)
   const thirdM = keyMatches?.find((m: any) => m.match_number === 103)
 
-  const champion: string = (finalM?.winner_team as any)?.name ?? ''
+  // Recoger todos los team_ids necesarios para buscar nombres
+  const teamIds = new Set<number>()
+  if (finalM?.home_team_id) teamIds.add(finalM.home_team_id)
+  if (finalM?.away_team_id) teamIds.add(finalM.away_team_id)
+  if (finalM?.winner_team_id) teamIds.add(finalM.winner_team_id)
+  if (thirdM?.winner_team_id) teamIds.add(thirdM.winner_team_id)
+
+  const { data: teamRows } = await supabase
+    .from('teams')
+    .select('id, name')
+    .in('id', [...teamIds])
+
+  const teamName = (id: number | null): string =>
+    id ? (teamRows?.find((t: any) => t.id === id)?.name ?? '') : ''
+
+  const champion: string = teamName(finalM?.winner_team_id ?? null)
   const runner_up: string = finalM?.winner_team_id
     ? finalM.winner_team_id === finalM.home_team_id
-      ? (finalM.away_team as any)?.name ?? ''
-      : (finalM.home_team as any)?.name ?? ''
+      ? teamName(finalM.away_team_id)
+      : teamName(finalM.home_team_id)
     : ''
-  const third_place: string = (thirdM?.winner_team as any)?.name ?? ''
+  const third_place: string = teamName(thirdM?.winner_team_id ?? null)
 
-  // Fetch all special predictions
+  // Leer todas las predicciones especiales
   const { data: allPredictions, error: fetchError } = await supabase
     .from('special_predictions')
-    .select('*')
+    .select('id, user_id, type, value, created_at')
 
   if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 })
 
+  // Usar created_at (no updated_at): el trigger update_updated_at_column() se dispara
+  // en cada UPDATE de la tabla (incluidos saves de admin), corrompiendo updated_at.
+  // created_at solo se fija en INSERT y refleja cuándo el usuario hizo su predicción.
   const teamPredDeadline = new Date('2026-06-11T23:59:59-05:00')
   const knockoutStartDeadline = new Date('2026-06-28T00:00:00-05:00')
+  const firstMatchDeadline = new Date('2026-06-11T14:00:00-05:00')
 
-  // Group by user
   const userPredictions = new Map<string, any[]>()
   allPredictions?.forEach((pred: any) => {
     if (!userPredictions.has(pred.user_id)) userPredictions.set(pred.user_id, [])
@@ -68,18 +85,18 @@ export async function POST(request: Request) {
     let topScorerPoints = 0
 
     predictions.forEach((pred: any) => {
-      const predictionTime = new Date(pred.updated_at || pred.created_at)
-      const beforeTeamDeadline = predictionTime < teamPredDeadline
-      const beforeKnockouts = predictionTime < knockoutStartDeadline
-      const beforeTournament = predictionTime < new Date('2026-06-11T14:00:00-05:00')
+      const t = new Date(pred.created_at)
+      const beforeTeam = t < teamPredDeadline
+      const beforeKnockout = t < knockoutStartDeadline
+      const beforeFirst = t < firstMatchDeadline
 
       if (pred.type === 'champion' && champion && pred.value === champion) {
-        championPoints = beforeTeamDeadline ? 20 : beforeKnockouts ? 10 : 0
+        championPoints = beforeTeam ? 20 : beforeKnockout ? 10 : 0
       } else if (pred.type === 'runner_up' && runner_up && pred.value === runner_up) {
-        runnerUpPoints = beforeTeamDeadline ? 12 : beforeKnockouts ? 6 : 0
+        runnerUpPoints = beforeTeam ? 12 : beforeKnockout ? 6 : 0
       } else if (pred.type === 'third_place' && third_place && pred.value === third_place) {
-        thirdPlacePoints = beforeTeamDeadline ? 12 : beforeKnockouts ? 6 : 0
-      } else if (pred.type === 'mvp' && mvpFirstName && mvpLastName && beforeTournament) {
+        thirdPlacePoints = beforeTeam ? 12 : beforeKnockout ? 6 : 0
+      } else if (pred.type === 'mvp' && mvpFirstName && mvpLastName && beforeFirst) {
         try {
           const p = typeof pred.value === 'string' ? JSON.parse(pred.value) : pred.value
           if (
@@ -88,7 +105,7 @@ export async function POST(request: Request) {
             p.country === mvpCountry
           ) mvpPoints = 10
         } catch {}
-      } else if (pred.type === 'top_scorer' && topScorerFirstName && topScorerLastName && beforeTournament) {
+      } else if (pred.type === 'top_scorer' && topScorerFirstName && topScorerLastName && beforeFirst) {
         try {
           const p = typeof pred.value === 'string' ? JSON.parse(pred.value) : pred.value
           if (
@@ -111,7 +128,7 @@ export async function POST(request: Request) {
     })
   }
 
-  // Batch update using service role (bypasses RLS)
+  // Actualizar con service role (bypasea RLS)
   let updated = 0
   const errors: string[] = []
   for (const upd of updates) {
