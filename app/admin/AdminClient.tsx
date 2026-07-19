@@ -1777,197 +1777,26 @@ function SpecialsTab() {
     setSaving(true)
 
     try {
-      // Get all users' special predictions
-      const { data: allPredictions, error: fetchError } = await supabase
-        .from('special_predictions')
-        .select('*')
-
-      if (fetchError) throw fetchError
-
-      // Group predictions by user
-      const userPredictions = new Map<string, any[]>()
-      allPredictions?.forEach((pred) => {
-        if (!userPredictions.has(pred.user_id)) {
-          userPredictions.set(pred.user_id, [])
-        }
-        userPredictions.get(pred.user_id)!.push(pred)
+      // Usar API route con service role para bypasear RLS
+      const res = await fetch('/api/admin/save-special-results', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mvp_first_name: actualResults.mvp_first_name,
+          mvp_last_name: actualResults.mvp_last_name,
+          mvp_country: actualResults.mvp_country,
+          top_scorer_first_name: actualResults.top_scorer_first_name,
+          top_scorer_last_name: actualResults.top_scorer_last_name,
+          top_scorer_country: actualResults.top_scorer_country,
+        }),
       })
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error ?? 'Error en save-special-results')
 
-      // Calculate points for each user
-      const updates: any[] = []
+      // Recalcular totales de puntos en profiles
+      await fetch('/api/admin/recalculate-points', { method: 'POST' })
 
-      // Define deadlines for progressive point system (Colombia timezone)
-      const firstMatchDeadline = new Date('2026-06-11T14:00:00-05:00') // 11 jun, 2pm Colombia — para MVP y goleador
-      const teamPredDeadline = new Date('2026-06-11T23:59:59-05:00')   // 11 jun, fin del día — para campeón/sub/tercero
-      const knockoutStartDeadline = new Date('2026-06-28T00:00:00-05:00') // 28 jun, inicio eliminatorias
-
-      for (const [userId, predictions] of userPredictions.entries()) {
-        let championPoints = 0
-        let runnerUpPoints = 0
-        let thirdPlacePoints = 0
-        let mvpPoints = 0
-        let topScorerPoints = 0
-
-        predictions.forEach((pred) => {
-          const predictionTime = new Date(pred.updated_at || pred.created_at)
-          const beforeTeamDeadline = predictionTime < teamPredDeadline     // puntos completos campeón/sub/tercero
-          const beforeKnockouts = predictionTime < knockoutStartDeadline   // mitad de puntos
-          const beforeTournament = predictionTime < firstMatchDeadline     // puntos completos MVP/goleador
-
-          if (pred.type === 'champion' && pred.value === actualResults.champion && actualResults.champion) {
-            // Campeón: 20pts hasta fin del 11 jun, 10pts hasta knockouts
-            championPoints = beforeTeamDeadline ? 20 : beforeKnockouts ? 10 : 0
-          } else if (pred.type === 'runner_up' && pred.value === actualResults.runner_up && actualResults.runner_up) {
-            // Subcampeón: 12pts hasta fin del 11 jun, 6pts hasta knockouts
-            runnerUpPoints = beforeTeamDeadline ? 12 : beforeKnockouts ? 6 : 0
-          } else if (pred.type === 'third_place' && pred.value === actualResults.third_place && actualResults.third_place) {
-            // Tercer lugar: 12pts hasta fin del 11 jun, 6pts hasta knockouts
-            thirdPlacePoints = beforeTeamDeadline ? 12 : beforeKnockouts ? 6 : 0
-          } else if (pred.type === 'mvp' && actualResults.mvp_first_name && actualResults.mvp_last_name) {
-            // MVP: 10pts antes del primer partido, 0 después
-            if (beforeTournament) {
-              try {
-                const mvpPred = JSON.parse(pred.value)
-                if (
-                  mvpPred.first_name?.toLowerCase() === actualResults.mvp_first_name.toLowerCase() &&
-                  mvpPred.last_name?.toLowerCase() === actualResults.mvp_last_name.toLowerCase() &&
-                  mvpPred.country === actualResults.mvp_country
-                ) {
-                  mvpPoints = 10
-                }
-              } catch (e) {
-                // Old format, skip
-              }
-            }
-          } else if (pred.type === 'top_scorer' && actualResults.top_scorer_first_name && actualResults.top_scorer_last_name) {
-            // Top scorer: 10pts before tournament only, locked after
-            if (beforeTournament) {
-              try {
-                const scorerPred = JSON.parse(pred.value)
-                if (
-                  scorerPred.first_name?.toLowerCase() === actualResults.top_scorer_first_name.toLowerCase() &&
-                  scorerPred.last_name?.toLowerCase() === actualResults.top_scorer_last_name.toLowerCase() &&
-                  scorerPred.country === actualResults.top_scorer_country
-                ) {
-                  topScorerPoints = 10
-                }
-              } catch (e) {
-                // Old format, skip
-              }
-            }
-          }
-        })
-
-        // Update points for each prediction type
-        predictions.forEach((pred) => {
-          let points = 0
-          if (pred.type === 'champion') points = championPoints
-          else if (pred.type === 'runner_up') points = runnerUpPoints
-          else if (pred.type === 'third_place') points = thirdPlacePoints
-          else if (pred.type === 'mvp') points = mvpPoints
-          else if (pred.type === 'top_scorer') points = topScorerPoints
-
-          updates.push({
-            id: pred.id,
-            points_earned: points,
-          })
-        })
-      }
-
-      // Batch update all special predictions
-      for (const update of updates) {
-        await supabase
-          .from('special_predictions')
-          .update({ points_earned: update.points_earned })
-          .eq('id', update.id)
-      }
-
-      // Compute group standings dynamically from completed matches
-      const { data: completedGroupMatchesSP } = await supabase
-        .from('matches')
-        .select('group_id, home_team_id, away_team_id, home_score, away_score')
-        .eq('phase', 'groups')
-        .not('home_score', 'is', null)
-        .not('away_score', 'is', null)
-
-      const dynamicStandingsSP = new Map<string, Array<{team_id: number, position: number}>>()
-      'ABCDEFGHIJKL'.split('').forEach(groupId => {
-        const gMatches = completedGroupMatchesSP?.filter((m: any) => m.group_id === groupId) || []
-        if (gMatches.length < 6) return
-        const teamStats: Record<number, {pts: number, gf: number, gc: number}> = {}
-        gMatches.forEach((m: any) => {
-          if (!teamStats[m.home_team_id]) teamStats[m.home_team_id] = {pts: 0, gf: 0, gc: 0}
-          if (!teamStats[m.away_team_id]) teamStats[m.away_team_id] = {pts: 0, gf: 0, gc: 0}
-          teamStats[m.home_team_id].gf += m.home_score
-          teamStats[m.home_team_id].gc += m.away_score
-          teamStats[m.away_team_id].gf += m.away_score
-          teamStats[m.away_team_id].gc += m.home_score
-          if (m.home_score > m.away_score) teamStats[m.home_team_id].pts += 3
-          else if (m.home_score < m.away_score) teamStats[m.away_team_id].pts += 3
-          else { teamStats[m.home_team_id].pts += 1; teamStats[m.away_team_id].pts += 1 }
-        })
-        dynamicStandingsSP.set(groupId, Object.entries(teamStats)
-          .map(([tid, s]) => ({team_id: Number(tid), pts: s.pts, gf: s.gf, gd: s.gf - s.gc}))
-          .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf)
-          .map((t, i) => ({team_id: t.team_id, position: i + 1})))
-      })
-
-      // Recalculate total points for all users
-      const uniqueUsers = [...new Set(allPredictions.map(p => p.user_id))]
-      for (const userId of uniqueUsers) {
-        // Sum all match predictions
-        const { data: userPreds } = await supabase
-          .from('predictions')
-          .select('points_earned')
-          .eq('user_id', userId)
-
-        const matchPoints = userPreds?.reduce((sum, p) => sum + (p.points_earned || 0), 0) || 0
-
-        // Sum all special predictions
-        const { data: specialPreds } = await supabase
-          .from('special_predictions')
-          .select('points_earned')
-          .eq('user_id', userId)
-
-        const specialPoints = specialPreds?.reduce((sum, p) => sum + (p.points_earned || 0), 0) || 0
-
-        // Calculate group order bonus
-        let groupOrderBonus = 0
-        const { data: userPositionPredictionsSP } = await supabase
-          .from('group_position_predictions')
-          .select('group_id, team_id, predicted_position')
-          .eq('user_id', userId)
-
-        'ABCDEFGHIJKL'.split('').forEach((groupId) => {
-          const groupStandings = dynamicStandingsSP.get(groupId)
-          if (!groupStandings) return
-
-          const groupPosPreds = userPositionPredictionsSP?.filter(
-            (pp: any) => pp.group_id === groupId
-          ) || []
-          if (groupPosPreds.length < 4) return
-
-          let allMatch = true
-          for (let position = 1; position <= 4; position++) {
-            const realTeamId = groupStandings.find(s => s.position === position)?.team_id
-            const predTeamId = groupPosPreds.find((pp: any) => pp.predicted_position === position)?.team_id
-            if (!realTeamId || !predTeamId || realTeamId !== predTeamId) {
-              allMatch = false
-              break
-            }
-          }
-          if (allMatch) groupOrderBonus += 3
-        })
-
-        const totalPoints = matchPoints + specialPoints + groupOrderBonus
-
-        await supabase
-          .from('profiles')
-          .update({ total_points: totalPoints })
-          .eq('id', userId)
-      }
-
-      alert(`✅ Resultados guardados correctamente!\n\n${updates.length} predicciones actualizadas\n${uniqueUsers.length} usuarios recalculados`)
+      alert(`✅ Resultados guardados correctamente!\n\nCampeón: ${result.champion || '—'}\nSubcampeón: ${result.runner_up || '—'}\nTercer lugar: ${result.third_place || '—'}\n${result.updated} predicciones actualizadas`)
 
     } catch (error) {
       console.error('Error:', error)
