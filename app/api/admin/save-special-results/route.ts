@@ -96,22 +96,24 @@ export async function POST(request: Request) {
         runnerUpPoints = beforeTeam ? 12 : beforeKnockout ? 6 : 0
       } else if (pred.type === 'third_place' && third_place && pred.value === third_place) {
         thirdPlacePoints = beforeTeam ? 12 : beforeKnockout ? 6 : 0
-      } else if (pred.type === 'mvp' && mvpFirstName && mvpLastName && beforeFirst) {
+      } else if (pred.type === 'mvp' && mvpFirstName && mvpLastName && beforeKnockout) {
+        // Deadline: inicio de eliminatorias (28 jun), no primer partido — form estuvo abierto hasta entonces
         try {
           const p = typeof pred.value === 'string' ? JSON.parse(pred.value) : pred.value
           if (
             p.first_name?.toLowerCase() === mvpFirstName.toLowerCase() &&
             p.last_name?.toLowerCase() === mvpLastName.toLowerCase() &&
-            p.country === mvpCountry
+            p.country?.toLowerCase() === mvpCountry?.toLowerCase()
           ) mvpPoints = 10
         } catch {}
-      } else if (pred.type === 'top_scorer' && topScorerFirstName && topScorerLastName && beforeFirst) {
+      } else if (pred.type === 'top_scorer' && topScorerFirstName && topScorerLastName && beforeKnockout) {
+        // Deadline: inicio de eliminatorias (28 jun), no primer partido — form estuvo abierto hasta entonces
         try {
           const p = typeof pred.value === 'string' ? JSON.parse(pred.value) : pred.value
           if (
             p.first_name?.toLowerCase() === topScorerFirstName.toLowerCase() &&
             p.last_name?.toLowerCase() === topScorerLastName.toLowerCase() &&
-            p.country === topScorerCountry
+            p.country?.toLowerCase() === topScorerCountry?.toLowerCase()
           ) topScorerPoints = 10
         } catch {}
       }

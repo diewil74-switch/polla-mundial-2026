@@ -54,8 +54,18 @@ export async function POST() {
     const { data: userPreds } = await supabase.from('predictions').select('points_earned').eq('user_id', u.id)
     const matchPoints = userPreds?.reduce((s, p) => s + (p.points_earned || 0), 0) || 0
 
-    const { data: specialPreds } = await supabase.from('special_predictions').select('points_earned').eq('user_id', u.id)
-    const specialPoints = specialPreds?.reduce((s, p) => s + (p.points_earned || 0), 0) || 0
+    const { data: specialPreds } = await supabase
+      .from('special_predictions')
+      .select('type, points_earned, created_at')
+      .eq('user_id', u.id)
+      .order('created_at', { ascending: false })
+
+    // Tomar solo la predicción más reciente por tipo para evitar doble conteo si hay duplicados
+    const latestByType = new Map<string, number>()
+    specialPreds?.forEach((p: any) => {
+      if (!latestByType.has(p.type)) latestByType.set(p.type, p.points_earned || 0)
+    })
+    const specialPoints = [...latestByType.values()].reduce((s, pts) => s + pts, 0)
 
     const { data: posPreds } = await supabase
       .from('group_position_predictions')
