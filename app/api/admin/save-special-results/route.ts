@@ -119,6 +119,10 @@ export async function POST(request: Request) {
   const teamPredDeadline = new Date('2026-06-11T23:59:59-05:00')
   const knockoutStartDeadline = new Date('2026-06-28T00:00:00-05:00')
 
+  // Normaliza nombre: minúsculas, sin tildes, espacios simples
+  const normName = (s: string) =>
+    (s ?? '').trim().normalize('NFD').split('').filter(c => c.charCodeAt(0) < 0x0300 || c.charCodeAt(0) > 0x036f).join('').toLowerCase().replace(/\s+/g, ' ')
+
   const userPredictions = new Map<string, any[]>()
   allPredictions?.forEach((pred: any) => {
     if (!userPredictions.has(pred.user_id)) userPredictions.set(pred.user_id, [])
@@ -150,13 +154,15 @@ export async function POST(request: Request) {
       } else if (pred.type === 'top_scorer' && topScorerFirstName && topScorerLastName) {
         try {
           const p = typeof pred.value === 'string' ? JSON.parse(pred.value) : pred.value
-          const matches =
-            p.first_name?.toLowerCase() === topScorerFirstName.toLowerCase() &&
-            p.last_name?.toLowerCase() === topScorerLastName.toLowerCase() &&
-            p.country?.toLowerCase() === topScorerCountry?.toLowerCase()
+          // Comparar nombre completo normalizado (sin tildes, sin importar split first/last)
+          const storedFull = normName(`${p.first_name ?? ''} ${p.last_name ?? ''}`).trim()
+          const adminFull = normName(`${topScorerFirstName} ${topScorerLastName}`).trim()
+          const countryMatch = !topScorerCountry || normName(p.country ?? '') === normName(topScorerCountry)
+          const matches = storedFull === adminFull && countryMatch
           debugInfo.top_scorer = {
-            stored: p,
+            stored: p, stored_full: storedFull,
             admin_input: { first_name: topScorerFirstName, last_name: topScorerLastName, country: topScorerCountry },
+            admin_full: adminFull,
             name_match: matches,
             before_knockout: beforeKnockout,
             created_at: pred.created_at,
@@ -168,13 +174,14 @@ export async function POST(request: Request) {
       } else if (pred.type === 'mvp' && mvpFirstName && mvpLastName) {
         try {
           const p = typeof pred.value === 'string' ? JSON.parse(pred.value) : pred.value
-          const matches =
-            p.first_name?.toLowerCase() === mvpFirstName.toLowerCase() &&
-            p.last_name?.toLowerCase() === mvpLastName.toLowerCase() &&
-            p.country?.toLowerCase() === mvpCountry?.toLowerCase()
+          const storedFull = normName(`${p.first_name ?? ''} ${p.last_name ?? ''}`).trim()
+          const adminFull = normName(`${mvpFirstName} ${mvpLastName}`).trim()
+          const countryMatch = !mvpCountry || normName(p.country ?? '') === normName(mvpCountry)
+          const matches = storedFull === adminFull && countryMatch
           debugInfo.mvp = {
-            stored: p,
+            stored: p, stored_full: storedFull,
             admin_input: { first_name: mvpFirstName, last_name: mvpLastName, country: mvpCountry },
+            admin_full: adminFull,
             name_match: matches,
             before_knockout: beforeKnockout,
           }
