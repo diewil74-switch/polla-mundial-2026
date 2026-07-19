@@ -1744,7 +1744,6 @@ function SpecialsTab() {
   }, [])
 
   async function loadData() {
-    // Load teams
     const { data: teamsData } = await supabase
       .from('teams')
       .select('*')
@@ -1752,9 +1751,26 @@ function SpecialsTab() {
 
     if (teamsData) setTeams(teamsData)
 
-    // Load existing actual results if any
-    // We'll store these in a special table or use special_predictions with a specific user_id
-    // For now, let's check if there's a config table or similar
+    // Auto-derive champion/runner_up/third_place from match results (P103=tercer puesto, P104=final)
+    const { data: keyMatches } = await supabase
+      .from('matches')
+      .select('match_number, home_team_id, away_team_id, winner_team_id, home_team:home_team_id(name), away_team:away_team_id(name), winner_team:winner_team_id(name)')
+      .in('match_number', [103, 104])
+
+    if (keyMatches) {
+      const finalM = keyMatches.find((m: any) => m.match_number === 104)
+      const thirdM = keyMatches.find((m: any) => m.match_number === 103)
+
+      const champion = (finalM?.winner_team as any)?.name ?? ''
+      const runner_up = finalM?.winner_team_id
+        ? finalM.winner_team_id === finalM.home_team_id
+          ? (finalM.away_team as any)?.name ?? ''
+          : (finalM.home_team as any)?.name ?? ''
+        : ''
+      const third_place = (thirdM?.winner_team as any)?.name ?? ''
+
+      setActualResults(prev => ({ ...prev, champion, runner_up, third_place }))
+    }
   }
 
   async function saveSpecialResults() {
@@ -1975,62 +1991,37 @@ function SpecialsTab() {
       <div className="grid gap-6 md:grid-cols-2">
         {/* Equipos - Campeón, Subcampeón, Tercer Puesto */}
         <div className="bg-white rounded-xl border border-red-100 p-6">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">🏆 Posiciones del Torneo</h3>
+          <h3 className="text-lg font-bold text-slate-800 mb-1">🏆 Posiciones del Torneo</h3>
+          <p className="text-xs text-slate-500 mb-4">Auto-detectado desde los resultados de P103 y P104. Se actualiza al guardar.</p>
 
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 🥇 Campeón
               </label>
-              <select
-                value={actualResults.champion}
-                onChange={(e) => setActualResults({ ...actualResults, champion: e.target.value })}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg"
-              >
-                <option value="">Seleccionar equipo...</option>
-                {teams.map((team) => (
-                  <option key={team.id} value={team.name}>
-                    {team.flag_emoji} {team.name}
-                  </option>
-                ))}
-              </select>
+              <div className="w-full px-4 py-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-800 font-medium">
+                {actualResults.champion || <span className="text-slate-400 font-normal">Pendiente (Final P104 sin resultado)</span>}
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 🥈 Subcampeón
               </label>
-              <select
-                value={actualResults.runner_up}
-                onChange={(e) => setActualResults({ ...actualResults, runner_up: e.target.value })}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg"
-              >
-                <option value="">Seleccionar equipo...</option>
-                {teams.map((team) => (
-                  <option key={team.id} value={team.name}>
-                    {team.flag_emoji} {team.name}
-                  </option>
-                ))}
-              </select>
+              <div className="w-full px-4 py-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-800 font-medium">
+                {actualResults.runner_up || <span className="text-slate-400 font-normal">Pendiente (Final P104 sin resultado)</span>}
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 🥉 Tercer Lugar
               </label>
-              <select
-                value={actualResults.third_place}
-                onChange={(e) => setActualResults({ ...actualResults, third_place: e.target.value })}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg"
-              >
-                <option value="">Seleccionar equipo...</option>
-                {teams.map((team) => (
-                  <option key={team.id} value={team.name}>
-                    {team.flag_emoji} {team.name}
-                  </option>
-                ))}
-              </select>
+              <div className="w-full px-4 py-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-800 font-medium">
+                {actualResults.third_place || <span className="text-slate-400 font-normal">Pendiente (P103 sin resultado)</span>}
+              </div>
             </div>
+
           </div>
         </div>
 
