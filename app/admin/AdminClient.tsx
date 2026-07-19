@@ -1771,6 +1771,23 @@ function SpecialsTab() {
 
       setActualResults(prev => ({ ...prev, champion, runner_up, third_place }))
     }
+
+    // Restaurar MVP/goleador guardados previamente (persisten entre recargas)
+    try {
+      const saved = localStorage.getItem('admin_special_players')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        setActualResults(prev => ({
+          ...prev,
+          mvp_first_name: parsed.mvp_first_name ?? '',
+          mvp_last_name: parsed.mvp_last_name ?? '',
+          mvp_country: parsed.mvp_country ?? '',
+          top_scorer_first_name: parsed.top_scorer_first_name ?? '',
+          top_scorer_last_name: parsed.top_scorer_last_name ?? '',
+          top_scorer_country: parsed.top_scorer_country ?? '',
+        }))
+      }
+    } catch {}
   }
 
   async function saveSpecialResults() {
@@ -1792,6 +1809,18 @@ function SpecialsTab() {
       })
       const result = await res.json()
       if (!res.ok) throw new Error(result.error ?? 'Error en save-special-results')
+
+      // Persistir MVP/goleador en localStorage para no perderlos al recargar
+      try {
+        localStorage.setItem('admin_special_players', JSON.stringify({
+          mvp_first_name: actualResults.mvp_first_name,
+          mvp_last_name: actualResults.mvp_last_name,
+          mvp_country: actualResults.mvp_country,
+          top_scorer_first_name: actualResults.top_scorer_first_name,
+          top_scorer_last_name: actualResults.top_scorer_last_name,
+          top_scorer_country: actualResults.top_scorer_country,
+        }))
+      } catch {}
 
       // Recalcular totales de puntos en profiles
       await fetch('/api/admin/recalculate-points', { method: 'POST' })
