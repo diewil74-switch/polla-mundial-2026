@@ -37,10 +37,20 @@ export async function GET() {
 
   const { data: allSpecial } = await supabase
     .from('special_predictions')
-    .select('user_id, points_earned')
+    .select('user_id, type, points_earned, created_at')
+    .order('created_at', { ascending: false })
+
+  // Deduplicar por tipo: tomar solo la más reciente por (user_id, type)
+  const specialLatest: Record<string, Record<string, number>> = {}
+  allSpecial?.forEach((p: any) => {
+    if (!specialLatest[p.user_id]) specialLatest[p.user_id] = {}
+    if (!(p.type in specialLatest[p.user_id])) {
+      specialLatest[p.user_id][p.type] = p.points_earned || 0
+    }
+  })
   const specialPts: Record<string, number> = {}
-  allSpecial?.forEach(p => {
-    specialPts[p.user_id] = (specialPts[p.user_id] || 0) + (p.points_earned || 0)
+  Object.entries(specialLatest).forEach(([userId, byType]) => {
+    specialPts[userId] = Object.values(byType).reduce((s, pts) => s + pts, 0)
   })
 
   // Group order bonus
