@@ -10,6 +10,7 @@ import autoTable from 'jspdf-autotable'
 import { Flag } from '@/components/ui/Flag'
 import { ScoreStepper } from '@/components/ui/ScoreStepper'
 import { PtsBadge } from '@/components/ui/PtsBadge'
+import waStats from '@/lib/whatsapp-stats.json'
 
 type Profile = {
   id: string
@@ -81,6 +82,7 @@ export default function DashboardClient({ user, profile }: { user: User, profile
     { id: 'ranking', label: 'Ranking', icon: '📊' },
     { id: 'resultados', label: 'Resultados', icon: '📋' },
     { id: 'estadisticas', label: 'Estadísticas', icon: '📈' },
+    { id: 'whatsapp', label: 'WhatsApp', icon: '💬' },
   ]
 
   const handleSignOut = async () => {
@@ -159,6 +161,7 @@ export default function DashboardClient({ user, profile }: { user: User, profile
         {activeTab === 'ranking' && <RankingTab currentUserId={user.id} />}
         {activeTab === 'resultados' && <ResultadosTab currentUserId={user.id} />}
         {activeTab === 'estadisticas' && <EstadisticasTab />}
+        {activeTab === 'whatsapp' && <WhatsAppTab />}
       </main>
     </div>
   )
@@ -3891,6 +3894,221 @@ function EstadisticasTab() {
             </tbody>
           </table>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ────────────────────────────────────────────────────────────────
+// TAB: WhatsApp Stats
+// ────────────────────────────────────────────────────────────────
+function WhatsAppTab() {
+  const stats = waStats as any
+  const users: any[] = stats.users.filter((u: any) => u.total >= 5)
+  const top = users[0]
+
+  const MEDAL: Record<number, string> = { 0: '🥇', 1: '🥈', 2: '🥉' }
+  const GREEN = '#16a34a'
+  const RED = '#dc2626'
+
+  // Bar chart colors — one per user
+  const COLORS = ['#dc2626','#f59e0b','#3b82f6','#10b981','#8b5cf6','#f97316','#06b6d4','#ec4899','#84cc16','#6366f1','#14b8a6','#fb923c']
+
+  // Most active hour label
+  const peakHour = [...stats.msgsByHour].sort((a: any, b: any) => b.count - a.count)[0]
+  const fmtHour = (h: number) => h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`
+
+  // Format date DD/MM to readable
+  const fmtDate = (d: string) => {
+    const [day, mon, yr] = d.split('/')
+    const months = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+    return `${day} ${months[parseInt(mon)]} '${yr}`
+  }
+
+  // Top sticker sender
+  const topStickers = [...users].sort((a, b) => b.stickers - a.stickers)[0]
+  const topImages = [...users].sort((a, b) => b.images - a.images)[0]
+  const mostWordy = [...users].sort((a, b) => b.avgWordsPerMsg - a.avgWordsPerMsg)[0]
+  const mostFirsts = [...users].sort((a, b) => b.firstOfDay - a.firstOfDay)[0]
+
+  // Activity by hour — group in 6-hour blocks for a cleaner chart
+  const hourData = stats.msgsByHour
+
+  return (
+    <div className="space-y-6">
+      <div className="section-head">
+        <div className="h-left">
+          <h1>WhatsApp <span className="accent">del grupo</span></h1>
+          <p>Estadísticas del chat desde {fmtDate(stats.dateRange.start)} hasta {fmtDate(stats.dateRange.end)} · {stats.totalMessages.toLocaleString()} mensajes en {stats.totalDays} días</p>
+        </div>
+      </div>
+
+      {/* KPI cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: 'Total mensajes', value: stats.totalMessages.toLocaleString(), sub: `en ${stats.totalDays} días`, icon: '💬' },
+          { label: 'Más activo', value: top.sender.split(' ')[0], sub: `${top.total} mensajes`, icon: '🏆' },
+          { label: 'Hora pico', value: fmtHour(peakHour.hour), sub: `${peakHour.count} msgs`, icon: '⏰' },
+          { label: 'Día más activo', value: fmtDate(stats.mostActiveDays[0].date), sub: `${stats.mostActiveDays[0].count} mensajes`, icon: '🔥' },
+        ].map((kpi) => (
+          <div key={kpi.label} className="bg-white rounded-xl border border-red-100 p-4 text-center">
+            <div className="text-2xl mb-1">{kpi.icon}</div>
+            <div className="text-lg font-bold text-slate-800 leading-tight">{kpi.value}</div>
+            <div className="text-xs text-slate-500 mt-0.5">{kpi.label}</div>
+            <div className="text-xs text-red-600 font-medium mt-0.5">{kpi.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Mensajes por usuario — podio + tabla */}
+      <div className="bg-white rounded-xl border border-red-100 p-6">
+        <h3 className="text-lg font-bold text-slate-800 mb-4">💬 Mensajes por participante</h3>
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Podio top-3 */}
+          <div>
+            {users.slice(0, 10).map((u, i) => (
+              <div key={u.sender} className="flex items-center gap-3 py-2 border-b border-slate-50 last:border-0">
+                <span className="w-7 text-lg text-center">{MEDAL[i] ?? <span className="text-sm text-slate-400 font-mono">{i + 1}</span>}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-slate-800 text-sm truncate">{u.sender}</span>
+                    <span className="text-sm font-bold text-red-600 ml-2">{u.total}</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-1.5 mt-1">
+                    <div className="bg-red-500 h-1.5 rounded-full" style={{ width: `${(u.total / users[0].total) * 100}%` }} />
+                  </div>
+                </div>
+                <span className="text-xs text-slate-400 w-10 text-right">{Math.round((u.total / stats.totalMessages) * 100)}%</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Curiosidades */}
+          <div className="space-y-3">
+            <h4 className="font-semibold text-slate-700 text-sm uppercase tracking-wide">Curiosidades</h4>
+            {[
+              { icon: '🖼️', label: 'Rey de imágenes', name: topImages.sender, val: `${topImages.images} fotos` },
+              { icon: '😄', label: 'Maestro del sticker', name: topStickers.sender, val: `${topStickers.stickers} stickers` },
+              { icon: '📝', label: 'Más palabras por mensaje', name: mostWordy.sender, val: `${mostWordy.avgWordsPerMsg} palabras/msg` },
+              { icon: '🌅', label: 'Primero en escribir', name: mostFirsts.sender, val: `${mostFirsts.firstOfDay} veces el primero del día` },
+            ].map(c => (
+              <div key={c.label} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                <span className="text-xl">{c.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-slate-500">{c.label}</div>
+                  <div className="font-semibold text-slate-800 text-sm truncate">{c.name}</div>
+                </div>
+                <span className="text-xs text-red-600 font-medium whitespace-nowrap">{c.val}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Tabla detallada */}
+      <div className="bg-white rounded-xl border border-red-100 p-6">
+        <h3 className="text-lg font-bold text-slate-800 mb-4">📊 Detalle por participante</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-red-600 text-white">
+                <th className="px-3 py-2 text-left">Participante</th>
+                <th className="px-3 py-2 text-center">Total</th>
+                <th className="px-3 py-2 text-center">Textos</th>
+                <th className="px-3 py-2 text-center">🖼️ Fotos</th>
+                <th className="px-3 py-2 text-center">😄 Stickers</th>
+                <th className="px-3 py-2 text-center">Pal/msg</th>
+                <th className="px-3 py-2 text-center">Días activo</th>
+                <th className="px-3 py-2 text-center">1° del día</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u, i) => (
+                <tr key={u.sender} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                  <td className="px-3 py-2 font-medium text-slate-800">{u.sender}</td>
+                  <td className="px-3 py-2 text-center font-bold text-red-600">{u.total}</td>
+                  <td className="px-3 py-2 text-center text-slate-700">{u.textMessages}</td>
+                  <td className="px-3 py-2 text-center text-slate-600">{u.images}</td>
+                  <td className="px-3 py-2 text-center text-slate-600">{u.stickers}</td>
+                  <td className="px-3 py-2 text-center text-slate-600">{u.avgWordsPerMsg}</td>
+                  <td className="px-3 py-2 text-center text-slate-600">{u.daysActive}</td>
+                  <td className="px-3 py-2 text-center text-slate-600">{u.firstOfDay}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Actividad por hora */}
+      <div className="bg-white rounded-xl border border-red-100 p-6">
+        <h3 className="text-lg font-bold text-slate-800 mb-1">⏰ Actividad por hora del día</h3>
+        <p className="text-sm text-slate-500 mb-4">¿A qué hora es más activo el grupo?</p>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={hourData} margin={{ top: 0, right: 8, left: 0, bottom: 0 }}>
+            <XAxis dataKey="hour" tickFormatter={h => h % 6 === 0 ? fmtHour(h) : ''} tick={{ fontSize: 11 }} />
+            <YAxis hide />
+            <Tooltip formatter={(v: any) => [`${v} msgs`, 'Mensajes']} labelFormatter={h => fmtHour(h as number)} />
+            <Bar dataKey="count" fill={RED} radius={[3, 3, 0, 0]}>
+              {hourData.map((entry: any, i: number) => (
+                <Cell key={i} fill={entry.count === peakHour.count ? '#991b1b' : RED} fillOpacity={0.6 + 0.4 * (entry.count / peakHour.count)} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Días más activos */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl border border-red-100 p-6">
+          <h3 className="text-lg font-bold text-slate-800 mb-4">🔥 Días más activos</h3>
+          <div className="space-y-3">
+            {stats.mostActiveDays.map((d: any, i: number) => (
+              <div key={d.date} className="flex items-center gap-3">
+                <span className="text-lg w-8 text-center">{MEDAL[i] ?? `${i + 1}.`}</span>
+                <div className="flex-1">
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-slate-800 text-sm">{fmtDate(d.date)}</span>
+                    <span className="font-bold text-red-600 text-sm">{d.count} msgs</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-1.5 mt-1">
+                    <div className="bg-red-500 h-1.5 rounded-full" style={{ width: `${(d.count / stats.mostActiveDays[0].count) * 100}%` }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Top palabras */}
+        <div className="bg-white rounded-xl border border-red-100 p-6">
+          <h3 className="text-lg font-bold text-slate-800 mb-4">🗣️ Palabras más usadas</h3>
+          <div className="flex flex-wrap gap-2">
+            {stats.topWords.map((w: any, i: number) => (
+              <span
+                key={w.word}
+                className="px-3 py-1 rounded-full text-white text-sm font-medium"
+                style={{ backgroundColor: COLORS[i % COLORS.length], fontSize: `${Math.max(11, Math.min(16, 10 + (w.count / stats.topWords[0].count) * 6))}px` }}
+              >
+                {w.word} <span className="opacity-75 text-xs">×{w.count}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Actividad total por día — sparkline */}
+      <div className="bg-white rounded-xl border border-red-100 p-6">
+        <h3 className="text-lg font-bold text-slate-800 mb-1">📅 Actividad diaria del grupo</h3>
+        <p className="text-sm text-slate-500 mb-4">Mensajes por día desde el inicio de la polla hasta el final del mundial</p>
+        <ResponsiveContainer width="100%" height={180}>
+          <BarChart data={stats.msgsByDate} margin={{ top: 0, right: 8, left: 0, bottom: 0 }}>
+            <XAxis dataKey="date" tickFormatter={(d) => { const [day, mon] = d.split('/'); return `${day}/${mon}` }} tick={{ fontSize: 10 }} interval={6} />
+            <YAxis hide />
+            <Tooltip formatter={(v: any) => [`${v} msgs`, '']} labelFormatter={(d) => fmtDate(d as string)} />
+            <Bar dataKey="count" fill={RED} fillOpacity={0.7} radius={[2, 2, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   )

@@ -1,0 +1,756 @@
+{
+  "totalMessages": 4454,
+  "totalDays": 53,
+  "dateRange": {
+    "start": "25/05/26",
+    "end": "20/07/26"
+  },
+  "users": [
+    {
+      "sender": "Ernesto",
+      "total": 930,
+      "textMessages": 848,
+      "images": 21,
+      "stickers": 27,
+      "gifs": 34,
+      "videos": 0,
+      "audios": 0,
+      "totalWords": 5710,
+      "avgWordsPerMsg": 7,
+      "longestMsg": 52,
+      "daysActive": 44,
+      "firstOfDay": 7
+    },
+    {
+      "sender": "Felipe Avila Canada",
+      "total": 819,
+      "textMessages": 605,
+      "images": 16,
+      "stickers": 88,
+      "gifs": 110,
+      "videos": 0,
+      "audios": 0,
+      "totalWords": 3854,
+      "avgWordsPerMsg": 6,
+      "longestMsg": 31,
+      "daysActive": 41,
+      "firstOfDay": 4
+    },
+    {
+      "sender": "Andres Montaña",
+      "total": 465,
+      "textMessages": 399,
+      "images": 24,
+      "stickers": 18,
+      "gifs": 20,
+      "videos": 4,
+      "audios": 0,
+      "totalWords": 3938,
+      "avgWordsPerMsg": 10,
+      "longestMsg": 134,
+      "daysActive": 43,
+      "firstOfDay": 7
+    },
+    {
+      "sender": "Diego W",
+      "total": 393,
+      "textMessages": 355,
+      "images": 36,
+      "stickers": 1,
+      "gifs": 1,
+      "videos": 0,
+      "audios": 0,
+      "totalWords": 3254,
+      "avgWordsPerMsg": 9,
+      "longestMsg": 129,
+      "daysActive": 42,
+      "firstOfDay": 2
+    },
+    {
+      "sender": "Alejandro Sanchez",
+      "total": 337,
+      "textMessages": 293,
+      "images": 14,
+      "stickers": 29,
+      "gifs": 1,
+      "videos": 0,
+      "audios": 0,
+      "totalWords": 1812,
+      "avgWordsPerMsg": 6,
+      "longestMsg": 49,
+      "daysActive": 38,
+      "firstOfDay": 5
+    },
+    {
+      "sender": "Bernie",
+      "total": 287,
+      "textMessages": 253,
+      "images": 23,
+      "stickers": 5,
+      "gifs": 0,
+      "videos": 6,
+      "audios": 0,
+      "totalWords": 1813,
+      "avgWordsPerMsg": 7,
+      "longestMsg": 96,
+      "daysActive": 31,
+      "firstOfDay": 9
+    },
+    {
+      "sender": "ivan mora",
+      "total": 224,
+      "textMessages": 215,
+      "images": 6,
+      "stickers": 3,
+      "gifs": 0,
+      "videos": 0,
+      "audios": 0,
+      "totalWords": 2086,
+      "avgWordsPerMsg": 10,
+      "longestMsg": 64,
+      "daysActive": 44,
+      "firstOfDay": 3
+    },
+    {
+      "sender": "Andres Estrada",
+      "total": 218,
+      "textMessages": 210,
+      "images": 7,
+      "stickers": 1,
+      "gifs": 0,
+      "videos": 0,
+      "audios": 0,
+      "totalWords": 1777,
+      "avgWordsPerMsg": 8,
+      "longestMsg": 41,
+      "daysActive": 32,
+      "firstOfDay": 1
+    },
+    {
+      "sender": "Juan Felipe Moreno",
+      "total": 204,
+      "textMessages": 193,
+      "images": 5,
+      "stickers": 5,
+      "gifs": 1,
+      "videos": 0,
+      "audios": 0,
+      "totalWords": 1105,
+      "avgWordsPerMsg": 6,
+      "longestMsg": 44,
+      "daysActive": 31,
+      "firstOfDay": 5
+    },
+    {
+      "sender": "Alejandro Pelacho Peláez",
+      "total": 149,
+      "textMessages": 145,
+      "images": 3,
+      "stickers": 0,
+      "gifs": 0,
+      "videos": 1,
+      "audios": 0,
+      "totalWords": 1168,
+      "avgWordsPerMsg": 8,
+      "longestMsg": 55,
+      "daysActive": 26,
+      "firstOfDay": 3
+    },
+    {
+      "sender": "Jorge Guzman",
+      "total": 142,
+      "textMessages": 133,
+      "images": 7,
+      "stickers": 2,
+      "gifs": 0,
+      "videos": 0,
+      "audios": 0,
+      "totalWords": 472,
+      "avgWordsPerMsg": 4,
+      "longestMsg": 16,
+      "daysActive": 24,
+      "firstOfDay": 2
+    },
+    {
+      "sender": "Chatas",
+      "total": 103,
+      "textMessages": 91,
+      "images": 9,
+      "stickers": 3,
+      "gifs": 0,
+      "videos": 0,
+      "audios": 0,
+      "totalWords": 873,
+      "avgWordsPerMsg": 10,
+      "longestMsg": 55,
+      "daysActive": 22,
+      "firstOfDay": 0
+    },
+    {
+      "sender": "Leo",
+      "total": 55,
+      "textMessages": 46,
+      "images": 3,
+      "stickers": 6,
+      "gifs": 0,
+      "videos": 0,
+      "audios": 0,
+      "totalWords": 271,
+      "avgWordsPerMsg": 6,
+      "longestMsg": 26,
+      "daysActive": 19,
+      "firstOfDay": 1
+    },
+    {
+      "sender": "Joan Avellaneda",
+      "total": 45,
+      "textMessages": 31,
+      "images": 5,
+      "stickers": 4,
+      "gifs": 1,
+      "videos": 3,
+      "audios": 1,
+      "totalWords": 234,
+      "avgWordsPerMsg": 8,
+      "longestMsg": 35,
+      "daysActive": 13,
+      "firstOfDay": 1
+    },
+    {
+      "sender": "Alejandro Mora",
+      "total": 40,
+      "textMessages": 39,
+      "images": 0,
+      "stickers": 0,
+      "gifs": 0,
+      "videos": 1,
+      "audios": 0,
+      "totalWords": 300,
+      "avgWordsPerMsg": 8,
+      "longestMsg": 19,
+      "daysActive": 15,
+      "firstOfDay": 1
+    },
+    {
+      "sender": "RichiNino",
+      "total": 20,
+      "textMessages": 18,
+      "images": 2,
+      "stickers": 0,
+      "gifs": 0,
+      "videos": 0,
+      "audios": 0,
+      "totalWords": 115,
+      "avgWordsPerMsg": 6,
+      "longestMsg": 25,
+      "daysActive": 4,
+      "firstOfDay": 1
+    },
+    {
+      "sender": "Alejandro Velasco",
+      "total": 10,
+      "textMessages": 8,
+      "images": 0,
+      "stickers": 2,
+      "gifs": 0,
+      "videos": 0,
+      "audios": 0,
+      "totalWords": 41,
+      "avgWordsPerMsg": 5,
+      "longestMsg": 11,
+      "daysActive": 3,
+      "firstOfDay": 1
+    },
+    {
+      "sender": "Juan Pablo Velasco",
+      "total": 8,
+      "textMessages": 7,
+      "images": 0,
+      "stickers": 1,
+      "gifs": 0,
+      "videos": 0,
+      "audios": 0,
+      "totalWords": 62,
+      "avgWordsPerMsg": 9,
+      "longestMsg": 14,
+      "daysActive": 2,
+      "firstOfDay": 0
+    },
+    {
+      "sender": "Diego herrera Herrera",
+      "total": 2,
+      "textMessages": 2,
+      "images": 0,
+      "stickers": 0,
+      "gifs": 0,
+      "videos": 0,
+      "audios": 0,
+      "totalWords": 8,
+      "avgWordsPerMsg": 4,
+      "longestMsg": 5,
+      "daysActive": 2,
+      "firstOfDay": 0
+    },
+    {
+      "sender": "Diego Wilches",
+      "total": 1,
+      "textMessages": 1,
+      "images": 0,
+      "stickers": 0,
+      "gifs": 0,
+      "videos": 0,
+      "audios": 0,
+      "totalWords": 6,
+      "avgWordsPerMsg": 6,
+      "longestMsg": 6,
+      "daysActive": 1,
+      "firstOfDay": 0
+    },
+    {
+      "sender": "~ Nico",
+      "total": 1,
+      "textMessages": 1,
+      "images": 0,
+      "stickers": 0,
+      "gifs": 0,
+      "videos": 0,
+      "audios": 0,
+      "totalWords": 4,
+      "avgWordsPerMsg": 4,
+      "longestMsg": 4,
+      "daysActive": 1,
+      "firstOfDay": 0
+    },
+    {
+      "sender": "~ Juan Pablo Alvarez",
+      "total": 1,
+      "textMessages": 1,
+      "images": 0,
+      "stickers": 0,
+      "gifs": 0,
+      "videos": 0,
+      "audios": 0,
+      "totalWords": 6,
+      "avgWordsPerMsg": 6,
+      "longestMsg": 6,
+      "daysActive": 1,
+      "firstOfDay": 0
+    }
+  ],
+  "msgsByDate": [
+    {
+      "date": "25/05/26",
+      "count": 57
+    },
+    {
+      "date": "26/05/26",
+      "count": 102
+    },
+    {
+      "date": "27/05/26",
+      "count": 10
+    },
+    {
+      "date": "28/05/26",
+      "count": 14
+    },
+    {
+      "date": "31/05/26",
+      "count": 3
+    },
+    {
+      "date": "2/06/26",
+      "count": 3
+    },
+    {
+      "date": "3/06/26",
+      "count": 30
+    },
+    {
+      "date": "4/06/26",
+      "count": 21
+    },
+    {
+      "date": "5/06/26",
+      "count": 1
+    },
+    {
+      "date": "6/06/26",
+      "count": 15
+    },
+    {
+      "date": "8/06/26",
+      "count": 47
+    },
+    {
+      "date": "9/06/26",
+      "count": 29
+    },
+    {
+      "date": "10/06/26",
+      "count": 42
+    },
+    {
+      "date": "11/06/26",
+      "count": 301
+    },
+    {
+      "date": "12/06/26",
+      "count": 196
+    },
+    {
+      "date": "13/06/26",
+      "count": 138
+    },
+    {
+      "date": "14/06/26",
+      "count": 127
+    },
+    {
+      "date": "15/06/26",
+      "count": 266
+    },
+    {
+      "date": "16/06/26",
+      "count": 248
+    },
+    {
+      "date": "17/06/26",
+      "count": 162
+    },
+    {
+      "date": "18/06/26",
+      "count": 48
+    },
+    {
+      "date": "19/06/26",
+      "count": 20
+    },
+    {
+      "date": "20/06/26",
+      "count": 82
+    },
+    {
+      "date": "21/06/26",
+      "count": 97
+    },
+    {
+      "date": "22/06/26",
+      "count": 96
+    },
+    {
+      "date": "23/06/26",
+      "count": 209
+    },
+    {
+      "date": "24/06/26",
+      "count": 82
+    },
+    {
+      "date": "25/06/26",
+      "count": 58
+    },
+    {
+      "date": "26/06/26",
+      "count": 147
+    },
+    {
+      "date": "27/06/26",
+      "count": 117
+    },
+    {
+      "date": "28/06/26",
+      "count": 25
+    },
+    {
+      "date": "29/06/26",
+      "count": 87
+    },
+    {
+      "date": "30/06/26",
+      "count": 17
+    },
+    {
+      "date": "1/07/26",
+      "count": 37
+    },
+    {
+      "date": "2/07/26",
+      "count": 74
+    },
+    {
+      "date": "3/07/26",
+      "count": 129
+    },
+    {
+      "date": "4/07/26",
+      "count": 4
+    },
+    {
+      "date": "5/07/26",
+      "count": 79
+    },
+    {
+      "date": "6/07/26",
+      "count": 31
+    },
+    {
+      "date": "7/07/26",
+      "count": 370
+    },
+    {
+      "date": "8/07/26",
+      "count": 7
+    },
+    {
+      "date": "9/07/26",
+      "count": 8
+    },
+    {
+      "date": "10/07/26",
+      "count": 22
+    },
+    {
+      "date": "11/07/26",
+      "count": 142
+    },
+    {
+      "date": "12/07/26",
+      "count": 3
+    },
+    {
+      "date": "13/07/26",
+      "count": 30
+    },
+    {
+      "date": "14/07/26",
+      "count": 105
+    },
+    {
+      "date": "15/07/26",
+      "count": 266
+    },
+    {
+      "date": "16/07/26",
+      "count": 25
+    },
+    {
+      "date": "17/07/26",
+      "count": 2
+    },
+    {
+      "date": "18/07/26",
+      "count": 58
+    },
+    {
+      "date": "19/07/26",
+      "count": 139
+    },
+    {
+      "date": "20/07/26",
+      "count": 26
+    }
+  ],
+  "msgsByHour": [
+    {
+      "hour": 0,
+      "count": 3
+    },
+    {
+      "hour": 1,
+      "count": 0
+    },
+    {
+      "hour": 2,
+      "count": 0
+    },
+    {
+      "hour": 3,
+      "count": 2
+    },
+    {
+      "hour": 4,
+      "count": 7
+    },
+    {
+      "hour": 5,
+      "count": 9
+    },
+    {
+      "hour": 6,
+      "count": 6
+    },
+    {
+      "hour": 7,
+      "count": 59
+    },
+    {
+      "hour": 8,
+      "count": 54
+    },
+    {
+      "hour": 9,
+      "count": 117
+    },
+    {
+      "hour": 10,
+      "count": 160
+    },
+    {
+      "hour": 11,
+      "count": 236
+    },
+    {
+      "hour": 12,
+      "count": 407
+    },
+    {
+      "hour": 13,
+      "count": 375
+    },
+    {
+      "hour": 14,
+      "count": 308
+    },
+    {
+      "hour": 15,
+      "count": 475
+    },
+    {
+      "hour": 16,
+      "count": 530
+    },
+    {
+      "hour": 17,
+      "count": 377
+    },
+    {
+      "hour": 18,
+      "count": 277
+    },
+    {
+      "hour": 19,
+      "count": 228
+    },
+    {
+      "hour": 20,
+      "count": 278
+    },
+    {
+      "hour": 21,
+      "count": 394
+    },
+    {
+      "hour": 22,
+      "count": 124
+    },
+    {
+      "hour": 23,
+      "count": 28
+    }
+  ],
+  "mostActiveDays": [
+    {
+      "date": "7/07/26",
+      "count": 370
+    },
+    {
+      "date": "11/06/26",
+      "count": 301
+    },
+    {
+      "date": "15/06/26",
+      "count": 266
+    },
+    {
+      "date": "15/07/26",
+      "count": 266
+    },
+    {
+      "date": "16/06/26",
+      "count": 248
+    }
+  ],
+  "topWords": [
+    {
+      "word": "partido",
+      "count": 155
+    },
+    {
+      "word": "polla",
+      "count": 123
+    },
+    {
+      "word": "está",
+      "count": 112
+    },
+    {
+      "word": "mundial",
+      "count": 95
+    },
+    {
+      "word": "colombia",
+      "count": 92
+    },
+    {
+      "word": "argentina",
+      "count": 88
+    },
+    {
+      "word": "jajaja",
+      "count": 85
+    },
+    {
+      "word": "ahora",
+      "count": 79
+    },
+    {
+      "word": "grupo",
+      "count": 70
+    },
+    {
+      "word": "puede",
+      "count": 68
+    },
+    {
+      "word": "solo",
+      "count": 64
+    },
+    {
+      "word": "españa",
+      "count": 59
+    },
+    {
+      "word": "bernie",
+      "count": 58
+    },
+    {
+      "word": "bueno",
+      "count": 56
+    },
+    {
+      "word": "instagram",
+      "count": 52
+    },
+    {
+      "word": "equipo",
+      "count": 51
+    },
+    {
+      "word": "nada",
+      "count": 51
+    },
+    {
+      "word": "inglaterra",
+      "count": 51
+    },
+    {
+      "word": "puntos",
+      "count": 50
+    },
+    {
+      "word": "vamos",
+      "count": 50
+    }
+  ]
+}
